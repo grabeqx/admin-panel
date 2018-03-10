@@ -1,0 +1,40 @@
+.d-nav {
+    margin-bottom: 20px;
+}
+#dashboard .d-nav ul {
+    display: flex;
+    list-style: none;
+    padding: 0px;
+    margin: 0px;
+}
+#dashboard .d-nav ul a {
+    padding: 11px 20px;
+    background: #fff;
+    color: #000;
+    line-height: normal;
+    display: block;
+    transition: all .2s ease-in-out;
+}
+#dashboard .d-nav ul a:hover {
+    color: #fff;
+    background: #000;
+}
+.advert table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    border: 1px solid #000;
+    border-top: 2px solid #000;
+}
+.advert table th {
+    padding: 6px 0px;
+    text-align: center;
+    font-size: 15px;
+    border: 1px solid #e6e6e6;
+    background: #f5f5f5;
+}
+.advert table td {
+    padding: 10px 5px;
+    text-align: center;
+    border: 1px solid #e6e6e6;
+}
