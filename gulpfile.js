@@ -7,6 +7,7 @@ gulp.task('join', function() {
     return gulp.src([
         './src/js/service.js',
         './src/js/classfieldsController.js',
+        './src/js/editController.js',
         './src/js/index.js',
         './src/js/configViews.js',
     ])

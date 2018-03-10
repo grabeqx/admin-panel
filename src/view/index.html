@@ -2,10 +2,13 @@
     <div class="d-nav">
         <ul>
             <li><a ui-sref="ogloszenia">Ogłoszenia</a></li>
-            <li><a ui-sref="kategorie">Kategorie</a></li>
+            <li><a ui-sref="dodaj">Dodaj ogłoszenie</a></li>
         </ul>
     </div>
-    <div id="d-view">
+    <div id="d-view" ng-controller="mainController">
+        <div id="loader">
+            <div class="loader">Loading...</div>
+        </div>
         <ui-view></ui-view>
     </div>
 </div>
