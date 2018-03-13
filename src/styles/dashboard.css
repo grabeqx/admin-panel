@@ -157,15 +157,26 @@
   width: 100%;
   border-collapse: collapse;
   background: #fff;
-  border: 1px solid #000;
-  border-top: 2px solid #3c8dbe;
+  margin: 10px 0px;
+  box-shadow: 0px 0px 3px 0px #6f6f6f;
 }
 .advert table th {
   padding: 12px 15px;
   text-align: center;
   font-size: 15px;
-  border: 1px solid #000000;
-  background: #f7f7f7;
+  border: 1px solid #9C27B0;
+  background: #9C27B0;
+  color: #fff;
+  font-weight: 400;
+}
+.advert table th:nth-of-type(1) {
+  min-width: 75px;
+}
+.advert table th:nth-of-type(3) {
+  min-width: 140px;
+}
+.advert table th:nth-of-type(6) {
+  min-width: 140px;
 }
 .advert table td {
   padding: 10px 5px;
@@ -177,21 +188,23 @@
   background: #fff;
   cursor: pointer;
 }
+.advert table tbody tr:first-of-type {
+  box-shadow: 0px 0px 10px 0px #000 inner;
+}
 .advert table tbody tr:hover {
   background: #f5f5f5;
 }
 .advert table tbody tr.promo {
-  background: #fff97f;
+  background: #FFF59D;
 }
 .advert table tbody tr.promo:hover {
-  background: #d8d261;
+  background: #FFEE58;
 }
 .advert table .promo td {
-  border: 1px solid #9c9951;
+  border: 1px solid #FFEE58;
 }
 .advert table td.ad-title {
   text-align: left;
-  padding-left: 30px;
 }
 .ad-title img {
   margin-right: 20px;
@@ -231,10 +244,11 @@
   cursor: pointer;
 }
 .search-container {
-  background: #d2d7de;
-  padding: 10px 5px;
-  margin-bottom: 10px;
-  border-radius: 5px;
+  background: #fff;
+  padding: 10px 25px;
+  margin-bottom: 20px;
+  border-radius: 0px;
+  box-shadow: 0px 0px 6px 0px #afafaf;
 }
 #search h3 {
   font-size: 24px;
@@ -251,6 +265,7 @@
   box-sizing: border-box;
   box-shadow: none;
   border: none;
+  background: #f1f1f1;
 }
 #search input[type="submit"] {
   margin-left: 10px;
@@ -273,19 +288,27 @@
 #advert-form {
   padding: 10px;
   box-sizing: border-box;
-  background: #d2d7de;
+  background: #fff;
+  box-shadow: 0px 0px 6px 0px #afafaf;
 }
 #advert-form label {
   display: block;
   font-size: 16px;
   line-height: normal;
-  margin-top: 10px;
+  margin-top: 20px;
 }
-#advert-form input[type="text"] {
+#advert-form input[type="text"],
+#advert-form select {
   border: none;
   padding: 10px 10px;
   width: 50%;
   min-width: 300px;
+  background: #f1f1f1;
+}
+#advert-form select {
+  padding: 5px 0px;
+  height: 35px;
+  border-radius: 0px;
 }
 #advert-form input[type="submit"] {
   background: #3c8dbe;
@@ -296,9 +319,50 @@
   transition: all 0.2s ease-in-out;
   margin-top: 20px;
 }
+#advert-form input[type="submit"]:hover {
+  background: #2e6688;
+}
 #advert-form textarea {
   width: 100%;
   height: 300px;
   border: none;
   padding: 5px 10px;
+  background: #f1f1f1;
+}
+.tags-container {
+  display: flex;
+  flex-wrap: wrap;
+}
+.tags-container label {
+  display: block;
+  width: 25%;
+}
+.image-container {
+  display: flex;
+}
+.image-container > div {
+  position: relative;
+  margin-right: 20px;
+}
+.image-container > div button {
+  position: absolute;
+  top: 0px;
+  right: 0px;
+  border: 0px;
+  background: #fff;
+  font-size: 26px;
+  line-height: 1;
+  padding: 0px 0px 0px 3px;
+}
+.save-info {
+  font-size: 20px;
+  margin-top: 10px;
+  transition: all .2s ease-in-out;
+  opacity: 0;
+  max-height: 0px;
+  overflow: hidden;
+}
+.save-info.seved {
+  opacity: 1;
+  max-height: 100px
 }

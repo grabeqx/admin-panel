@@ -39,13 +39,12 @@ dashboard.config(function($stateProvider, $urlRouterProvider) {
                                 'fa-angle-up': classfield.ordering.DateCreated.up, 
                                 'hidden': classfield.ordering.DateCreated.hidden}"
                                 ng-if="!classfield.searchActive"></i></th>
-                            <th ng-click="classfield.order('category')" class="clickable">Kategoria <i class="order fa" ng-class="{
-                                'fa-angle-down': classfield.ordering.category.down,
-                                'fa-angle-up': classfield.ordering.category.up, 
-                                'hidden': classfield.ordering.category.hidden}"
-                                ng-if="!classfield.searchActive"></i></th>
+                            <th>Kategoria</th>
                             <th>Wygaśnięte</th>
                             <th>Promowanie do</th>
+                            <th>E-mail</th>
+                            <th>Hasło</th>
+                            <th>IP adres</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -59,6 +58,9 @@ dashboard.config(function($stateProvider, $urlRouterProvider) {
                             <td>{{advert.category}}</td>
                             <td>{{advert.expires == 1 ? 'Nie' : 'Tak'}}</td>
                             <td>{{advert.promoDo}}</td>
+                            <td>{{advert.Email}}</td>
+                            <td>{{advert.adPassword}}</td>
+                            <td>{{advert.ip}}</td>
                         </tr>
                     </tbody>
                 </table>
@@ -88,34 +90,55 @@ dashboard.config(function($stateProvider, $urlRouterProvider) {
         url: '/edit/:id',
         template: `
             <div id="advert-content">
-                <form id="advert-form">
+                <form id="advert-form" ng-submit="edit.submit()">
                     <label>Tytuł</label>
                     <input type="text" ng-model="edit.advert.Title">
+                    <label>Data utworzenia</label>
+                    <input type="text" ng-model="edit.advert.DateCreated">
                     <label>Cena</label>
                     <input type="text" ng-model="edit.advert.Price">
-                    <label>Cena text</label>
-                    <input type="text" ng-model="edit.advert.ValueText">
+                    <label>Wartość Tagi</label>
+                    <input type="text" ng-model="edit.advert.ValueTags">
                     <label>Imię</label>
                     <input type="text" ng-model="edit.advert.Name">
                     <label>Email</label>
                     <input type="text" ng-model="edit.advert.Email">
+                    <label>Telefon stacjonarny</label>
+                    <input type="text" ng-model="edit.advert.Landline">
+                    <label>Telefon</label>
+                    <input type="text" ng-model="edit.advert.Mobile">
+                    <label>Kategoria</label>
+                    <select ng-model="edit.advert.idCategory" ng-selected="edit.advert.idCategory" ng-change="edit.changeCategory(edit.advert.idCategory)">
+                        <option value="{{cat.id}}" ng-repeat="cat in edit.categories">{{cat.name}}</option>
+                    </select>
+                    <label>Tagi</label>
+                    <div class="tags-container">
+                        <label ng-repeat="tag in edit.tags">
+                            <input type="checkbox" value="{{tag.idSubcategory}}" ng-click="edit.toggleTags(tag.idSubcategory)" ng-checked="edit.checkTag(tag.idSubcategory)">
+                            {{tag.Subcategory}}
+                        </label>
+                    </div>
+                    <label>CountrySlug</label>
+                    <input type="text" ng-model="edit.advert.CountrySlug">
                     <label>Lokalizacja</label>
                     <input type="text" ng-model="edit.advert.LocationIndex">
                     <label>Kod pocztowy</label>
                     <input type="text" ng-model="edit.advert.Postcode">
-                    <label>Telefon</label>
-                    <input type="text" ng-model="edit.advert.Mobile">
-                    <label>Tagi</label>
-                    <input type="text" ng-model="edit.advert.Tags">
-                    <label>Kategoria</label>
-                    <input type="text" ng-model="edit.advert.category">
                     <label>Firma</label>
                     <input type="text" ng-model="edit.advert.company">
                     <label>Promowanie do</label>
                     <input type="text" ng-model="edit.advert.promoDo">
                     <label>Opis</label>
                     <textarea ng-model="edit.advert.Description"></textarea>
+                    <label ng-if="edit.advert.UploadedFiles">Zdjęcia</label>
+                    <div class="image-container" ng-if="edit.advert.UploadedFiles">
+                        <div ng-repeat="image in edit.images track by $index" ng-if="image.length">
+                            <button ng-click="edit.removeImg($index)"><i class="fa fa-times-circle"></i></button>
+                            <img ng-src="/img/ad/{{image}}">
+                        </div>
+                    </div>
                     <input type="submit" value="Zapisz">
+                    <p class="save-info" ng-class="{'seved': edit.saved}">Zapisano</p>
                 </form>
             </div>
         `,
@@ -128,8 +151,25 @@ dashboard.config(function($stateProvider, $urlRouterProvider) {
                     method: 'GET',
                     url: `/dashboard.php?function=getAdvert&advertId=${$stateParams.id}`
                 }).then((result) => {
-                    document.querySelector('#loader').classList.add('hide-loader');
+                    console.log(result.data);
                     return result.data[0];
+                })
+            },
+            tags: function($http, advert) {
+                return $http({
+                    method: 'GET',
+                    url: `/dashboard.php?function=getTags&category=${advert.idCategory}`
+                }).then((result) => {
+                    return result.data;
+                })
+            },
+            postcodes: function($http, advert) {
+                return $http({
+                    method: 'GET',
+                    url: `/dashboard.php?function=getPostcode`
+                }).then((result) => {
+                    document.querySelector('#loader').classList.add('hide-loader');
+                    return result.data;
                 })
             }
         }
