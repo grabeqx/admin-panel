@@ -1,7 +1,8 @@
-var classfieldController = function (adverts, $http) {
+var classfieldController = function (adverts, $http, $state) {
     // Data
     var vm = this;
     this.adverts = adverts;
+    this.searchType = 'Title';
     this.page = 0;
     this.step = 50;
     this.from = 50;
@@ -21,6 +22,15 @@ var classfieldController = function (adverts, $http) {
     this.order = order;
     this.search = search;
     this.reset = reset;
+    this.remove = remove;
+    this.selectAll = selectAll;
+    this.strip = strip;
+
+    function strip(html) {
+        var tmp = document.createElement("DIV");
+        tmp.innerHTML = html;
+        return tmp.textContent || tmp.innerText || "";
+    }
 
     function getAdvert(from, to, sorting, sortDierction) {
         document.querySelector('#loader').classList.remove('hide-loader');
@@ -62,11 +72,11 @@ var classfieldController = function (adverts, $http) {
         }
     }
 
-    function search(value) {
+    function search(value, type) {
         document.querySelector('#loader').classList.remove('hide-loader');
         $http({
             method: 'GET',
-            url: `/dashboard.php?function=search&searchValue=${encodeURIComponent(value)}`
+            url: `/dashboard.php?function=search&searchValue=${encodeURIComponent(value)}&type=${type}`
         }).then((response) => {
             document.querySelector('#loader').classList.add('hide-loader');
             vm.adverts = response.data;
@@ -80,6 +90,35 @@ var classfieldController = function (adverts, $http) {
                 vm.searchActive = false;
                 vm.searchval = '';
             });
+    }
+
+    function remove() {
+        var adToRemove = [];
+        for(var i in vm.adverts) {
+            if(vm.adverts[i].delete) {
+                adToRemove.push(vm.adverts[i].idAdvert);
+            }
+        }
+        document.querySelector('#loader').classList.remove('hide-loader');
+        $http({
+            method: 'GET',
+            url: `/dashboard.php?function=remove&adToRemove=${adToRemove}`
+        }).then((response) => {
+            $state.reload();
+            document.querySelector('#loader').classList.add('hide-loader');
+        })
+    }
+
+    function selectAll(select) {
+        if(select) {
+            for(var i in vm.adverts) {
+                vm.adverts[i].delete = true;
+            }
+        } else {
+            for(var i in vm.adverts) {
+                vm.adverts[i].delete = false;
+            }
+        }
     }
 
 }

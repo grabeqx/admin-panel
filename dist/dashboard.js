@@ -1,9 +1,10 @@
 'use strict';
 
-var classfieldController = function classfieldController(adverts, $http) {
+var classfieldController = function classfieldController(adverts, $http, $state) {
     // Data
     var vm = this;
     this.adverts = adverts;
+    this.searchType = 'Title';
     this.page = 0;
     this.step = 50;
     this.from = 50;
@@ -23,6 +24,15 @@ var classfieldController = function classfieldController(adverts, $http) {
     this.order = order;
     this.search = search;
     this.reset = reset;
+    this.remove = remove;
+    this.selectAll = selectAll;
+    this.strip = strip;
+
+    function strip(html) {
+        var tmp = document.createElement("DIV");
+        tmp.innerHTML = html;
+        return tmp.textContent || tmp.innerText || "";
+    }
 
     function getAdvert(from, to, sorting, sortDierction) {
         document.querySelector('#loader').classList.remove('hide-loader');
@@ -64,11 +74,11 @@ var classfieldController = function classfieldController(adverts, $http) {
         }
     }
 
-    function search(value) {
+    function search(value, type) {
         document.querySelector('#loader').classList.remove('hide-loader');
         $http({
             method: 'GET',
-            url: '/dashboard.php?function=search&searchValue=' + encodeURIComponent(value)
+            url: '/dashboard.php?function=search&searchValue=' + encodeURIComponent(value) + '&type=' + type
         }).then(function (response) {
             document.querySelector('#loader').classList.add('hide-loader');
             vm.adverts = response.data;
@@ -82,18 +92,52 @@ var classfieldController = function classfieldController(adverts, $http) {
             vm.searchval = '';
         });
     }
+
+    function remove() {
+        var adToRemove = [];
+        for (var i in vm.adverts) {
+            if (vm.adverts[i].delete) {
+                adToRemove.push(vm.adverts[i].idAdvert);
+            }
+        }
+        document.querySelector('#loader').classList.remove('hide-loader');
+        $http({
+            method: 'GET',
+            url: '/dashboard.php?function=remove&adToRemove=' + adToRemove
+        }).then(function (response) {
+            $state.reload();
+            document.querySelector('#loader').classList.add('hide-loader');
+        });
+    }
+
+    function selectAll(select) {
+        if (select) {
+            for (var i in vm.adverts) {
+                vm.adverts[i].delete = true;
+            }
+        } else {
+            for (var i in vm.adverts) {
+                vm.adverts[i].delete = false;
+            }
+        }
+    }
 };
-var editController = function editController(advert, tags, postcodes, $http) {
+var editController = function editController(advert, tags, postcodes, $http, promoTypes) {
     // Data
     var vm = this;
     this.advert = advert;
     this.tags = tags;
     this.postcodes = postcodes;
+    this.promoTypes = promoTypes;
     this.images = this.advert.UploadedFiles ? this.advert.UploadedFiles.split('*') : [];
     delete this.advert.ValueText;
     this.adTags = this.advert.Tags.split(',');
     this.categories = [{ id: 1, name: 'Kupię Sprzedam' }, { id: 2, name: 'Auto-Moto' }, { id: 3, name: 'Pokoje do wynajęcia' }, { id: 7, name: 'Domy / Mieszkania do wynajęcia' }, { id: 4, name: 'Praca' }, { id: 6, name: 'Usługi / Biznes' }, { id: 9, name: 'Społeczność / Polacy w UK' }, { id: 5, name: 'Towarzystwo / Randki, Przyjaźń' }];
     this.saved = 0;
+    this.promoTyp = "";
+    this.promoOd = "";
+    this.promoDo = "";
+    this.removeMessage = "";
 
     // Methods
     this.checkTag = checkTag;
@@ -101,6 +145,36 @@ var editController = function editController(advert, tags, postcodes, $http) {
     this.changeCategory = changeCategory;
     this.submit = submit;
     this.removeImg = removeImg;
+    this.formatDate = formatDate;
+    this.removePromo = removePromo;
+
+    function formatDate(date) {
+        var today = new Date(date),
+            dd = today.getDate(),
+            mm = today.getMonth() + 1,
+            yyyy = today.getFullYear(),
+            hh = today.getHours(),
+            min = today.getMinutes(),
+            sec = today.getSeconds();
+
+        if (dd < 10) {
+            dd = '0' + dd;
+        }
+        if (mm < 10) {
+            mm = '0' + mm;
+        }
+        if (hh < 10) {
+            hh = '0' + hh;
+        }
+        if (min < 10) {
+            min = '0' + min;
+        }
+        if (sec < 10) {
+            sec = '0' + sec;
+        }
+
+        return yyyy + '-' + mm + '-' + dd + ' ' + hh + ':' + min + ':' + sec;
+    }
 
     function toggleTags(id) {
         var idx = vm.adTags.indexOf(id);
@@ -134,11 +208,29 @@ var editController = function editController(advert, tags, postcodes, $http) {
     }
 
     function submit() {
+        var x = new Date(vm.promoDo);
         $http({
             method: 'GET',
             url: '/dashboard.php?function=submit&data=' + JSON.stringify(vm.advert)
         }).then(function (response) {
+            if (vm.promoTyp != "" && vm.promoOd && vm.promoDo) {
+                $http({
+                    method: 'GET',
+                    url: '/dashboard.php?function=makePromo&id=' + vm.advert.idAdvert + '&promoOd=' + vm.formatDate(vm.promoOd) + '&promoDo=' + vm.formatDate(vm.promoDo) + '&promoTyp=' + vm.promoTyp
+                }).then(function (response) {
+                    console.log(response.data);
+                });
+            }
             vm.saved = 1;
+        });
+    }
+
+    function removePromo() {
+        $http({
+            method: 'GET',
+            url: '/dashboard.php?function=removePromo&id=' + vm.advert.idAdvert
+        }).then(function () {
+            vm.removeMessage = "Promowanie wyłączone";
         });
     }
 };
@@ -148,7 +240,7 @@ dashboard.config(function ($stateProvider, $urlRouterProvider) {
     $stateProvider.state({
         name: 'ogloszenia',
         url: '/ogloszenia',
-        template: '\n            <div class="search-container">\n                <form id="search" ng-submit="classfield.search(classfield.searchval)">\n                    <h3>Szukaj</h3>\n                    <label>Tytu\u0142</label>\n                    <input type="text" \n                        ng-model="classfield.searchval"\n                        placeholder="min. 3 znaki"\n                    >\n                    <input type="submit" value="Szukaj" ng-disabled="!(classfield.searchval.length >= 3)">\n                    <button ng-click="classfield.reset()">Reset</button>\n                </form>\n            </div>\n            <div class="pagination" ng-if="!classfield.searchActive">\n                <button ng-click="classfield.goBack()"><i class="fa fa-angle-left"></i>  Wstecz</button>\n                <button ng-click="classfield.goForward()">Dalej  <i class="fa fa-angle-right"></i></button>\n            </div>\n            <div class="advert">\n                <table>\n                    <thead>\n                        <tr>\n                            <th ng-click="classfield.order(\'idAdvert\')" class="clickable">Index <i class="order fa" ng-class="{\n                                \'fa-angle-down\': classfield.ordering.idAdvert.down,\n                                \'fa-angle-up\': classfield.ordering.idAdvert.up, \n                                \'hidden\': classfield.ordering.idAdvert.hidden}"\n                                ng-if="!classfield.searchActive"></i></th>\n                            <th ng-click="classfield.order(\'Title\')" class="clickable">Tytu\u0142 <i class="order fa" ng-class="{\n                                \'fa-angle-down\': classfield.ordering.Title.down,\n                                \'fa-angle-up\': classfield.ordering.Title.up, \n                                \'hidden\': classfield.ordering.Title.hidden}"\n                                ng-if="!classfield.searchActive"></i></th>\n                            <th ng-click="classfield.order(\'DateCreated\')" class="clickable">Data utworzenia <i class="order fa" ng-class="{\n                                \'fa-angle-down\': classfield.ordering.DateCreated.down,\n                                \'fa-angle-up\': classfield.ordering.DateCreated.up, \n                                \'hidden\': classfield.ordering.DateCreated.hidden}"\n                                ng-if="!classfield.searchActive"></i></th>\n                            <th>Kategoria</th>\n                            <th>Wyga\u015Bni\u0119te</th>\n                            <th>Promowanie do</th>\n                            <th>E-mail</th>\n                            <th>Has\u0142o</th>\n                            <th>IP adres</th>\n                        </tr>\n                    </thead>\n                    <tbody>\n                        <tr ng-repeat="advert in classfield.adverts" ng-class="{promo: advert.promo}" ui-sref="edit({id: advert.idAdvert})">\n                            <td>{{advert.idAdvert}}</td>\n                            <td class="ad-title">\n                                <img ng-if="advert.MainFile" ng-src="/img/list/{{advert.MainFile}}"/>\n                                {{advert.Title}}\n                            </td>\n                            <td>{{advert.DateCreated}}</td>\n                            <td>{{advert.category}}</td>\n                            <td>{{advert.expires == 1 ? \'Nie\' : \'Tak\'}}</td>\n                            <td>{{advert.promoDo}}</td>\n                            <td>{{advert.Email}}</td>\n                            <td>{{advert.adPassword}}</td>\n                            <td>{{advert.ip}}</td>\n                        </tr>\n                    </tbody>\n                </table>\n            </div>\n            <div class="pagination" ng-if="!classfield.searchActive">\n                <button ng-click="classfield.goBack()"><i class="fa fa-angle-left"></i>  Wstecz</button>\n                <button ng-click="classfield.goForward()">Dalej  <i class="fa fa-angle-right"></i></button>\n            </div>\n        ',
+        template: '\n            <div class="search-container">\n                <form id="search" ng-submit="classfield.search(classfield.searchval, classfield.searchType)">\n                    <h3>Szukaj</h3>\n                    <select ng-model="classfield.searchType">\n                        <option selected value="Title">Tytu\u0142</option>\n                        <option value="Mobile">Numer telefonu</option>\n                        <option value="Description">Tre\u015B\u0107</option>\n                        <option value="idAdvert">Numer og\u0142oszenia</option>\n                        <option value="ip">IP</option>\n                        <option value="Email">E-mail</option>\n                    </select>\n                    <input type="text" \n                        ng-model="classfield.searchval"\n                        placeholder="min. 3 znaki"\n                    >\n                    <input type="submit" value="Szukaj" ng-disabled="!(classfield.searchval.length >= 3)">\n                    <button ng-click="classfield.reset()">Reset</button>\n                </form>\n            </div>\n            <div class="pagination" ng-if="!classfield.searchActive">\n                <button ng-click="classfield.goBack()"><i class="fa fa-angle-left"></i>  Wstecz</button>\n                <button ng-click="classfield.goForward()">Dalej  <i class="fa fa-angle-right"></i></button>\n            </div>\n            <div class="advert">\n                <table>\n                    <thead>\n                        <tr>\n                            <th ng-click="classfield.order(\'idAdvert\')" class="clickable">Index <i class="order fa" ng-class="{\n                                \'fa-angle-down\': classfield.ordering.idAdvert.down,\n                                \'fa-angle-up\': classfield.ordering.idAdvert.up, \n                                \'hidden\': classfield.ordering.idAdvert.hidden}"\n                                ng-if="!classfield.searchActive"></i></th>\n                            <th ng-click="classfield.order(\'Title\')" class="clickable">Tytu\u0142 <i class="order fa" ng-class="{\n                                \'fa-angle-down\': classfield.ordering.Title.down,\n                                \'fa-angle-up\': classfield.ordering.Title.up, \n                                \'hidden\': classfield.ordering.Title.hidden}"\n                                ng-if="!classfield.searchActive"></i></th>\n                            <th ng-click="classfield.order(\'DateCreated\')" class="clickable">Data utworzenia <i class="order fa" ng-class="{\n                                \'fa-angle-down\': classfield.ordering.DateCreated.down,\n                                \'fa-angle-up\': classfield.ordering.DateCreated.up, \n                                \'hidden\': classfield.ordering.DateCreated.hidden}"\n                                ng-if="!classfield.searchActive"></i></th>\n                            <th>Kategoria</th>\n                            <th>Wyga\u015Bni\u0119te</th>\n                            <th>Promowanie do</th>\n                            <th>E-mail</th>\n                            <th>Has\u0142o</th>\n                            <th>IP adres</th>\n                            <th><input type="checkbox" ng-model="classfield.removeAll" ng-click="classfield.selectAll(classfield.removeAll)" /> Usu\u0144</th>\n                        </tr>\n                    </thead>\n                    <tbody>\n                        <tr ng-repeat="advert in classfield.adverts" ng-class="{promo: advert.promo}">\n                            <td>{{advert.idAdvert}}</td>\n                            <td class="ad-title" ui-sref="edit({id: advert.idAdvert})">\n                                <img ng-if="advert.MainFile" ng-src="/img/list/{{advert.MainFile}}"/>\n                                {{advert.Title}}\n                            </td>\n                            <td>{{advert.DateCreated}}</td>\n                            <td>{{advert.category}}</td>\n                            <td>{{advert.expires == 1 ? \'Nie\' : \'Tak\'}}</td>\n                            <td>{{advert.promoDo}}</td>\n                            <td>{{advert.Email}}</td>\n                            <td>{{advert.adPassword}}</td>\n                            <td>{{advert.ip}}</td>\n                            <td><input type="checkbox" ng-model="advert.delete" /></td>\n                        </tr>\n                    </tbody>\n                </table>\n            </div>\n            <div class="pagination" ng-if="!classfield.searchActive">\n                <button ng-click="classfield.remove()" class="danger"><i class="fa fa-trash-alt"></i>  Usu\u0144</button>           \n                <button ng-click="classfield.goBack()"><i class="fa fa-angle-left"></i>  Wstecz</button>\n                <button ng-click="classfield.goForward()">Dalej  <i class="fa fa-angle-right"></i></button>\n            </div>\n        ',
         controller: classfieldController,
         controllerAs: 'classfield',
         resolve: {
@@ -166,7 +258,7 @@ dashboard.config(function ($stateProvider, $urlRouterProvider) {
     }).state({
         name: 'edit',
         url: '/edit/:id',
-        template: '\n            <div id="advert-content">\n                <form id="advert-form" ng-submit="edit.submit()">\n                    <label>Tytu\u0142</label>\n                    <input type="text" ng-model="edit.advert.Title">\n                    <label>Data utworzenia</label>\n                    <input type="text" ng-model="edit.advert.DateCreated">\n                    <label>Cena</label>\n                    <input type="text" ng-model="edit.advert.Price">\n                    <label>Warto\u015B\u0107 Tagi</label>\n                    <input type="text" ng-model="edit.advert.ValueTags">\n                    <label>Imi\u0119</label>\n                    <input type="text" ng-model="edit.advert.Name">\n                    <label>Email</label>\n                    <input type="text" ng-model="edit.advert.Email">\n                    <label>Telefon stacjonarny</label>\n                    <input type="text" ng-model="edit.advert.Landline">\n                    <label>Telefon</label>\n                    <input type="text" ng-model="edit.advert.Mobile">\n                    <label>Kategoria</label>\n                    <select ng-model="edit.advert.idCategory" ng-selected="edit.advert.idCategory" ng-change="edit.changeCategory(edit.advert.idCategory)">\n                        <option value="{{cat.id}}" ng-repeat="cat in edit.categories">{{cat.name}}</option>\n                    </select>\n                    <label>Tagi</label>\n                    <div class="tags-container">\n                        <label ng-repeat="tag in edit.tags">\n                            <input type="checkbox" value="{{tag.idSubcategory}}" ng-click="edit.toggleTags(tag.idSubcategory)" ng-checked="edit.checkTag(tag.idSubcategory)">\n                            {{tag.Subcategory}}\n                        </label>\n                    </div>\n                    <label>CountrySlug</label>\n                    <input type="text" ng-model="edit.advert.CountrySlug">\n                    <label>Lokalizacja</label>\n                    <input type="text" ng-model="edit.advert.LocationIndex">\n                    <label>Kod pocztowy</label>\n                    <input type="text" ng-model="edit.advert.Postcode">\n                    <label>Firma</label>\n                    <input type="text" ng-model="edit.advert.company">\n                    <label>Promowanie do</label>\n                    <input type="text" ng-model="edit.advert.promoDo">\n                    <label>Opis</label>\n                    <textarea ng-model="edit.advert.Description"></textarea>\n                    <label ng-if="edit.advert.UploadedFiles">Zdj\u0119cia</label>\n                    <div class="image-container" ng-if="edit.advert.UploadedFiles">\n                        <div ng-repeat="image in edit.images track by $index" ng-if="image.length">\n                            <button ng-click="edit.removeImg($index)"><i class="fa fa-times-circle"></i></button>\n                            <img ng-src="/img/ad/{{image}}">\n                        </div>\n                    </div>\n                    <input type="submit" value="Zapisz">\n                    <p class="save-info" ng-class="{\'seved\': edit.saved}">Zapisano</p>\n                </form>\n            </div>\n        ',
+        template: '\n            <div id="advert-content" ng-class="{\'promo\':edit.advert.promoDo}">\n                <form id="advert-form" ng-submit="edit.submit()">\n                    <label>Tytu\u0142</label>\n                    <input type="text" ng-model="edit.advert.Title">\n                    <label>Data utworzenia</label>\n                    <input type="text" ng-model="edit.advert.DateCreated">\n                    <label>Cena</label>\n                    <input type="text" ng-model="edit.advert.Price">\n                    <label>Warto\u015B\u0107 Tagi</label>\n                    <input type="text" ng-model="edit.advert.ValueTags">\n                    <label>Imi\u0119</label>\n                    <input type="text" ng-model="edit.advert.Name">\n                    <label>Email</label>\n                    <input type="text" ng-model="edit.advert.Email">\n                    <label>Telefon stacjonarny</label>\n                    <input type="text" ng-model="edit.advert.Landline">\n                    <label>Telefon</label>\n                    <input type="text" ng-model="edit.advert.Mobile">\n                    <label>Kategoria</label>\n                    <select ng-model="edit.advert.idCategory" ng-selected="edit.advert.idCategory" ng-change="edit.changeCategory(edit.advert.idCategory)">\n                        <option value="{{cat.id}}" ng-repeat="cat in edit.categories">{{cat.name}}</option>\n                    </select>\n                    <label>Tagi</label>\n                    <div class="tags-container">\n                        <label ng-repeat="tag in edit.tags">\n                            <input type="checkbox" value="{{tag.idSubcategory}}" ng-click="edit.toggleTags(tag.idSubcategory)" ng-checked="edit.checkTag(tag.idSubcategory)">\n                            {{tag.Subcategory}}\n                        </label>\n                    </div>\n                    <label>CountrySlug</label>\n                    <input type="text" ng-model="edit.advert.CountrySlug">\n                    <label>Lokalizacja</label>\n                    <input type="text" ng-model="edit.advert.LocationIndex">\n                    <label>Kod pocztowy</label>\n                    <input type="text" ng-model="edit.advert.Postcode">\n                    <label>Firma</label>\n                    <input type="text" ng-model="edit.advert.company">\n                    <div ng-if="edit.advert.promoDo">\n                        <label>Promowanie do</label>\n                        <input type="text" ng-model="edit.advert.promoDo">\n                        <label>Wy\u0142\u0105cz promowanie</label>\n                        <button ng-click="edit.removePromo()">Wy\u0142\u0105cz</button>\n                        <p class="message" ng-class="{\'show\': edit.removeMessage}">{{edit.removeMessage}}</p>\n                    </div>\n                    <label>Wygasni\u0119te</label>\n                    <input type="text" ng-model="edit.advert.expires">\n                    <label>Opis</label>\n                    <textarea ng-model="edit.advert.Description"></textarea>\n                    <div class="promo-div" ng-if="!edit.advert.promoDo">\n                        <label>Promowanie</label>\n                        <select ng-model="edit.promoTyp">\n                            <option value="">Wybierz</option>\n                            <option ng-repeat="typ in edit.promoTypes" value="{{typ.id}}">{{typ.opis}}</option>\n                        </select>\n                        <label>Promo Od</label>\n                        <input type="date" ng-model="edit.promoOd"/>\n                        <label>Promo Do</label>\n                        <input type="date" ng-model="edit.promoDo"/>\n                    </div>\n                    <label ng-if="edit.advert.UploadedFiles">Zdj\u0119cia</label>\n                    <div class="image-container" ng-if="edit.advert.UploadedFiles">\n                        <div ng-repeat="image in edit.images track by $index" ng-if="image.length">\n                            <button ng-click="edit.removeImg($index)"><i class="fa fa-times-circle"></i></button>\n                            <img ng-src="/img/ad/{{image}}">\n                        </div>\n                    </div>\n                    <input type="submit" value="Zapisz">\n                    <p class="save-info" ng-class="{\'seved\': edit.saved}">Zapisano</p>\n                </form>\n            </div>\n        ',
         controller: editController,
         controllerAs: 'edit',
         resolve: {
@@ -176,7 +268,6 @@ dashboard.config(function ($stateProvider, $urlRouterProvider) {
                     method: 'GET',
                     url: '/dashboard.php?function=getAdvert&advertId=' + $stateParams.id
                 }).then(function (result) {
-                    console.log(result.data);
                     return result.data[0];
                 });
             },
@@ -188,10 +279,18 @@ dashboard.config(function ($stateProvider, $urlRouterProvider) {
                     return result.data;
                 });
             },
-            postcodes: function postcodes($http, advert) {
+            postcodes: function postcodes($http) {
                 return $http({
                     method: 'GET',
                     url: '/dashboard.php?function=getPostcode'
+                }).then(function (result) {
+                    return result.data;
+                });
+            },
+            promoTypes: function promoTypes($http) {
+                return $http({
+                    method: 'GET',
+                    url: '/dashboard.php?function=getPromoTypes'
                 }).then(function (result) {
                     document.querySelector('#loader').classList.add('hide-loader');
                     return result.data;

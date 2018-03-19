@@ -5,9 +5,16 @@ dashboard.config(function($stateProvider, $urlRouterProvider) {
         url: '/ogloszenia',
         template: `
             <div class="search-container">
-                <form id="search" ng-submit="classfield.search(classfield.searchval)">
+                <form id="search" ng-submit="classfield.search(classfield.searchval, classfield.searchType)">
                     <h3>Szukaj</h3>
-                    <label>Tytuł</label>
+                    <select ng-model="classfield.searchType">
+                        <option selected value="Title">Tytuł</option>
+                        <option value="Mobile">Numer telefonu</option>
+                        <option value="Description">Treść</option>
+                        <option value="idAdvert">Numer ogłoszenia</option>
+                        <option value="ip">IP</option>
+                        <option value="Email">E-mail</option>
+                    </select>
                     <input type="text" 
                         ng-model="classfield.searchval"
                         placeholder="min. 3 znaki"
@@ -45,12 +52,13 @@ dashboard.config(function($stateProvider, $urlRouterProvider) {
                             <th>E-mail</th>
                             <th>Hasło</th>
                             <th>IP adres</th>
+                            <th><input type="checkbox" ng-model="classfield.removeAll" ng-click="classfield.selectAll(classfield.removeAll)" /> Usuń</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr ng-repeat="advert in classfield.adverts" ng-class="{promo: advert.promo}" ui-sref="edit({id: advert.idAdvert})">
+                        <tr ng-repeat="advert in classfield.adverts" ng-class="{promo: advert.promo}">
                             <td>{{advert.idAdvert}}</td>
-                            <td class="ad-title">
+                            <td class="ad-title" ui-sref="edit({id: advert.idAdvert})">
                                 <img ng-if="advert.MainFile" ng-src="/img/list/{{advert.MainFile}}"/>
                                 {{advert.Title}}
                             </td>
@@ -61,11 +69,13 @@ dashboard.config(function($stateProvider, $urlRouterProvider) {
                             <td>{{advert.Email}}</td>
                             <td>{{advert.adPassword}}</td>
                             <td>{{advert.ip}}</td>
+                            <td><input type="checkbox" ng-model="advert.delete" /></td>
                         </tr>
                     </tbody>
                 </table>
             </div>
             <div class="pagination" ng-if="!classfield.searchActive">
+                <button ng-click="classfield.remove()" class="danger"><i class="fa fa-trash-alt"></i>  Usuń</button>           
                 <button ng-click="classfield.goBack()"><i class="fa fa-angle-left"></i>  Wstecz</button>
                 <button ng-click="classfield.goForward()">Dalej  <i class="fa fa-angle-right"></i></button>
             </div>
@@ -89,7 +99,7 @@ dashboard.config(function($stateProvider, $urlRouterProvider) {
         name: 'edit',
         url: '/edit/:id',
         template: `
-            <div id="advert-content">
+            <div id="advert-content" ng-class="{'promo':edit.advert.promoDo}">
                 <form id="advert-form" ng-submit="edit.submit()">
                     <label>Tytuł</label>
                     <input type="text" ng-model="edit.advert.Title">
@@ -126,10 +136,28 @@ dashboard.config(function($stateProvider, $urlRouterProvider) {
                     <input type="text" ng-model="edit.advert.Postcode">
                     <label>Firma</label>
                     <input type="text" ng-model="edit.advert.company">
-                    <label>Promowanie do</label>
-                    <input type="text" ng-model="edit.advert.promoDo">
+                    <div ng-if="edit.advert.promoDo">
+                        <label>Promowanie do</label>
+                        <input type="text" ng-model="edit.advert.promoDo">
+                        <label>Wyłącz promowanie</label>
+                        <button ng-click="edit.removePromo()">Wyłącz</button>
+                        <p class="message" ng-class="{'show': edit.removeMessage}">{{edit.removeMessage}}</p>
+                    </div>
+                    <label>Wygasnięte</label>
+                    <input type="text" ng-model="edit.advert.expires">
                     <label>Opis</label>
                     <textarea ng-model="edit.advert.Description"></textarea>
+                    <div class="promo-div" ng-if="!edit.advert.promoDo">
+                        <label>Promowanie</label>
+                        <select ng-model="edit.promoTyp">
+                            <option value="">Wybierz</option>
+                            <option ng-repeat="typ in edit.promoTypes" value="{{typ.id}}">{{typ.opis}}</option>
+                        </select>
+                        <label>Promo Od</label>
+                        <input type="date" ng-model="edit.promoOd"/>
+                        <label>Promo Do</label>
+                        <input type="date" ng-model="edit.promoDo"/>
+                    </div>
                     <label ng-if="edit.advert.UploadedFiles">Zdjęcia</label>
                     <div class="image-container" ng-if="edit.advert.UploadedFiles">
                         <div ng-repeat="image in edit.images track by $index" ng-if="image.length">
@@ -151,7 +179,6 @@ dashboard.config(function($stateProvider, $urlRouterProvider) {
                     method: 'GET',
                     url: `/dashboard.php?function=getAdvert&advertId=${$stateParams.id}`
                 }).then((result) => {
-                    console.log(result.data);
                     return result.data[0];
                 })
             },
@@ -163,10 +190,18 @@ dashboard.config(function($stateProvider, $urlRouterProvider) {
                     return result.data;
                 })
             },
-            postcodes: function($http, advert) {
+            postcodes: function($http) {
                 return $http({
                     method: 'GET',
                     url: `/dashboard.php?function=getPostcode`
+                }).then((result) => {
+                    return result.data;
+                })
+            },
+            promoTypes: function($http) {
+                return $http({
+                    method: 'GET',
+                    url: `/dashboard.php?function=getPromoTypes`
                 }).then((result) => {
                     document.querySelector('#loader').classList.add('hide-loader');
                     return result.data;

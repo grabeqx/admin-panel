@@ -1,9 +1,10 @@
-var editController = function (advert, tags, postcodes, $http) {
+var editController = function (advert, tags, postcodes, $http, promoTypes) {
     // Data
     var vm = this;
     this.advert = advert;
     this.tags = tags;
     this.postcodes = postcodes;
+    this.promoTypes = promoTypes;
     this.images = this.advert.UploadedFiles ? this.advert.UploadedFiles.split('*'): [];
     delete(this.advert.ValueText);
     this.adTags = this.advert.Tags.split(',');
@@ -18,6 +19,10 @@ var editController = function (advert, tags, postcodes, $http) {
         {id: 5, name: 'Towarzystwo / Randki, Przyjaźń'}
     ];
     this.saved = 0;
+    this.promoTyp = "";
+    this.promoOd = "";
+    this.promoDo = "";
+    this.removeMessage = "";
 
     // Methods
     this.checkTag = checkTag;
@@ -25,6 +30,36 @@ var editController = function (advert, tags, postcodes, $http) {
     this.changeCategory = changeCategory;
     this.submit = submit;
     this.removeImg = removeImg;
+    this.formatDate = formatDate;
+    this.removePromo = removePromo;
+
+    function formatDate(date) {
+        var today = new Date(date),
+            dd = today.getDate(),
+            mm = today.getMonth()+1,
+            yyyy = today.getFullYear(),
+            hh = today.getHours(),
+            min = today.getMinutes(),
+            sec = today.getSeconds();
+
+        if(dd<10){
+            dd='0'+dd;
+        } 
+        if(mm<10){
+            mm='0'+mm;
+        }
+        if(hh<10){
+            hh='0'+hh;
+        } 
+        if(min<10){
+            min='0'+min;
+        } 
+        if(sec<10){
+            sec='0'+sec;
+        } 
+
+        return yyyy+'-'+mm+'-'+dd+' '+hh+':'+min+':'+sec;
+    }
 
     function toggleTags(id) {
         var idx = vm.adTags.indexOf(id);
@@ -58,11 +93,29 @@ var editController = function (advert, tags, postcodes, $http) {
     }
 
     function submit() {
+        var x = new Date(vm.promoDo);
         $http({
             method: 'GET',
             url: `/dashboard.php?function=submit&data=${JSON.stringify(vm.advert)}`
         }).then((response) => {
+            if(vm.promoTyp != "" && vm.promoOd && vm.promoDo) {
+                $http({
+                    method: 'GET',
+                    url: `/dashboard.php?function=makePromo&id=${vm.advert.idAdvert}&promoOd=${vm.formatDate(vm.promoOd)}&promoDo=${vm.formatDate(vm.promoDo)}&promoTyp=${vm.promoTyp}`
+                }).then((response) => {
+                    console.log(response.data);
+                })
+            }
             vm.saved = 1;
+        })
+    }
+
+    function removePromo() {
+        $http({
+            method: 'GET',
+            url: `/dashboard.php?function=removePromo&id=${vm.advert.idAdvert}`
+        }).then(() => {
+            vm.removeMessage = "Promowanie wyłączone";
         })
     }
 }
