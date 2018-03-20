@@ -1,4 +1,4 @@
-var editController = function (advert, tags, postcodes, $http, promoTypes) {
+var editController = function (advert, tags, postcodes, $http, promoTypes, $state) {
     // Data
     var vm = this;
     this.advert = advert;
@@ -98,15 +98,17 @@ var editController = function (advert, tags, postcodes, $http, promoTypes) {
             method: 'GET',
             url: `/dashboard.php?function=submit&data=${JSON.stringify(vm.advert)}`
         }).then((response) => {
-            if(vm.promoTyp != "" && vm.promoOd && vm.promoDo) {
+            if(vm.promoTyp != "") {
+                vm.promoOd = new Date();
+                vm.promoDo = new Date();
+                vm.promoDo.setDate(vm.promoDo.getDate() + parseInt(vm.promoTyp));
                 $http({
                     method: 'GET',
                     url: `/dashboard.php?function=makePromo&id=${vm.advert.idAdvert}&promoOd=${vm.formatDate(vm.promoOd)}&promoDo=${vm.formatDate(vm.promoDo)}&promoTyp=${vm.promoTyp}`
-                }).then((response) => {
-                    console.log(response.data);
                 })
             }
             vm.saved = 1;
+            window.history.back();
         })
     }
 

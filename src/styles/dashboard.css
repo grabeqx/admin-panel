@@ -224,8 +224,20 @@
   transition: all 0.2s ease-in-out;
   outline: none;
 }
+.pagination button.danger {
+  background: #F44336;
+  margin-right: 20px;
+  border: none;
+  text-align: center;
+}
 .pagination button:first-of-type {
   border-right: 2px solid #326788;
+}
+.pagination select {
+  margin-left: 5px;
+  background: #fff;
+  border-radius: 0px;
+  border: none;
 }
 .pagination button:hover,
 #search input[type="submit"]:hover,
@@ -256,8 +268,9 @@
   line-height: normal;
 }
 #search label {
-  margin-right: 10px;
+  margin-right: 5px;
   font-size: 17px;
+  margin-left: 10px;
 }
 #search input[type="text"] {
   width: 300px;
@@ -325,7 +338,7 @@
   border-radius: 0px;
 }
 #advert-form input[type="submit"],
-#advert-form button {
+#advert-form button.danger {
   background: #3c8dbe;
   color: #fff;
   border: 0px;
@@ -335,7 +348,7 @@
   margin-top: 20px;
 }
 #advert-form input[type="submit"]:hover,
-#advert-form button:hover {
+#advert-form button.danger:hover {
   background: #2e6688;
 }
 #advert-form textarea {
@@ -405,10 +418,4 @@
 .message.show {
   opacity: 1;
   max-height: 100px
-}
-.pagination button.danger {
-  background: #F44336;
-  margin-right: 20px;
-  border: none;
-  text-align: center;
 }

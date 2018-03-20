@@ -2,13 +2,32 @@ dashboard.config(function($stateProvider, $urlRouterProvider) {
     $stateProvider
     .state({
         name: 'ogloszenia',
-        url: '/ogloszenia',
+        url: '/ogloszenia?page&direction&sorting',
+        params: {
+            page: {
+                value: '0',
+                squash: true
+            },
+            direction: {
+                value: 'DESC',
+                squash: true
+            },
+            sorting: {
+                value: 'idAdvert',
+                squash: true
+            },
+            step: {
+                value: '50',
+                squash: true
+            }
+        },
         template: `
             <div class="search-container">
-                <form id="search" ng-submit="classfield.search(classfield.searchval, classfield.searchType)">
+                <form id="search" ng-submit="classfield.search(classfield.searchval, classfield.searchType, classfield.idCategory, classfield.city, 0, 50)">
                     <h3>Szukaj</h3>
                     <select ng-model="classfield.searchType">
                         <option selected value="Title">Tytuł</option>
+                        <option selected value="idAdvert">ID</option>
                         <option value="Mobile">Numer telefonu</option>
                         <option value="Description">Treść</option>
                         <option value="idAdvert">Numer ogłoszenia</option>
@@ -17,15 +36,27 @@ dashboard.config(function($stateProvider, $urlRouterProvider) {
                     </select>
                     <input type="text" 
                         ng-model="classfield.searchval"
-                        placeholder="min. 3 znaki"
+                        placeholder="Szukana fraza"
                     >
+                    <label>Kategoria</label>
+                    <select ng-model="classfield.idCategory" ng-selected="classfield.idCategory">
+                        <option value="0">Wszystkie</option>
+                        <option value="{{cat.idCategory}}" ng-repeat="cat in classfield.categories">{{cat.ShortName}}</option>
+                    </select>
+                    <label>Miasto</label>
+                    <input type="text" placeholder="miasto" ng-model="classfield.city" />
                     <input type="submit" value="Szukaj" ng-disabled="!(classfield.searchval.length >= 3)">
                     <button ng-click="classfield.reset()">Reset</button>
                 </form>
             </div>
-            <div class="pagination" ng-if="!classfield.searchActive">
+            <div class="pagination">
                 <button ng-click="classfield.goBack()"><i class="fa fa-angle-left"></i>  Wstecz</button>
                 <button ng-click="classfield.goForward()">Dalej  <i class="fa fa-angle-right"></i></button>
+                <select ng-model="classfield.selectStep" ng-change="classfield.changeStep(classfield.selectStep)">
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                </select>
             </div>
             <div class="advert">
                 <table>
@@ -74,7 +105,7 @@ dashboard.config(function($stateProvider, $urlRouterProvider) {
                     </tbody>
                 </table>
             </div>
-            <div class="pagination" ng-if="!classfield.searchActive">
+            <div class="pagination">
                 <button ng-click="classfield.remove()" class="danger"><i class="fa fa-trash-alt"></i>  Usuń</button>           
                 <button ng-click="classfield.goBack()"><i class="fa fa-angle-left"></i>  Wstecz</button>
                 <button ng-click="classfield.goForward()">Dalej  <i class="fa fa-angle-right"></i></button>
@@ -83,13 +114,11 @@ dashboard.config(function($stateProvider, $urlRouterProvider) {
         controller: classfieldController,
         controllerAs: 'classfield',
         resolve: {
-            adverts: function ($http) {
-                document.querySelector('#loader').classList.remove('hide-loader');
+            categories: function($http) {
                 return $http({
                     method: 'GET',
-                    url: `/dashboard.php?function=getAdverts&limitFrom=0&limitTo=50&sorting=idAdvert&sortDierction=DESC`
+                    url: `/dashboard.php?function=getCategories`
                 }).then((result) => {
-                    document.querySelector('#loader').classList.add('hide-loader');
                     return result.data;
                 })
             }
@@ -140,7 +169,7 @@ dashboard.config(function($stateProvider, $urlRouterProvider) {
                         <label>Promowanie do</label>
                         <input type="text" ng-model="edit.advert.promoDo">
                         <label>Wyłącz promowanie</label>
-                        <button ng-click="edit.removePromo()">Wyłącz</button>
+                        <button ng-click="edit.removePromo()" class="danger">Wyłącz</button>
                         <p class="message" ng-class="{'show': edit.removeMessage}">{{edit.removeMessage}}</p>
                     </div>
                     <label>Wygasnięte</label>
@@ -151,12 +180,8 @@ dashboard.config(function($stateProvider, $urlRouterProvider) {
                         <label>Promowanie</label>
                         <select ng-model="edit.promoTyp">
                             <option value="">Wybierz</option>
-                            <option ng-repeat="typ in edit.promoTypes" value="{{typ.id}}">{{typ.opis}}</option>
+                            <option ng-repeat="typ in edit.promoTypes" value="{{typ.czas_trwania}}">{{typ.opis}}</option>
                         </select>
-                        <label>Promo Od</label>
-                        <input type="date" ng-model="edit.promoOd"/>
-                        <label>Promo Do</label>
-                        <input type="date" ng-model="edit.promoDo"/>
                     </div>
                     <label ng-if="edit.advert.UploadedFiles">Zdjęcia</label>
                     <div class="image-container" ng-if="edit.advert.UploadedFiles">
@@ -223,5 +248,5 @@ dashboard.config(function($stateProvider, $urlRouterProvider) {
     });
 
 
-    $urlRouterProvider.otherwise('/ogloszenia');
+    $urlRouterProvider.otherwise('/ogloszenia?page=0&direction=DESC&sorting=idAdvert');
 });

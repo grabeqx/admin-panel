@@ -1,20 +1,25 @@
-var classfieldController = function (adverts, $http, $state) {
+var classfieldController = function ($http, $state, $stateParams, categories) {
     // Data
     var vm = this;
-    this.adverts = adverts;
+    this.adverts = [];
     this.searchType = 'Title';
-    this.page = 0;
-    this.step = 50;
-    this.from = 50;
+    this.page = parseInt($stateParams.page, 10);
+    this.selectStep = $stateParams.step;
+    this.step = parseInt(vm.selectStep);
+    this.from = vm.page * vm.step;
     this.ordering = {
-        idAdvert: {hidden: 0, up: 0, down: 1},
+        idAdvert: {hidden: 1, up: 0, down: 1},
         Title: {hidden: 1, up: 0, down: 1},
         DateCreated: {hidden: 1, up: 0, down: 1},
         category: {hidden: 1, up: 0, down: 1}
     };
-    this.sorting = 'idAdvert';
-    this.sortDirection = 'DESC';
+    this.sorting = $stateParams.sorting;
+    this.sortDirection = $stateParams.direction;
+    this.ordering[$stateParams.sorting].hidden = 0;
     this.searchActive = false;
+    this.idCategory = "0";
+    this.city = "";
+    this.categories = categories;
     // Methods
     this.getAdvert = getAdvert;
     this.goForward = goForward;
@@ -25,6 +30,14 @@ var classfieldController = function (adverts, $http, $state) {
     this.remove = remove;
     this.selectAll = selectAll;
     this.strip = strip;
+    this.changeStep = changeStep;
+    
+
+    _Init();
+
+    function _Init() {
+        vm.getAdvert(vm.from, vm.step, vm.sorting, vm.sortDirection, false);
+    }
 
     function strip(html) {
         var tmp = document.createElement("DIV");
@@ -32,7 +45,7 @@ var classfieldController = function (adverts, $http, $state) {
         return tmp.textContent || tmp.innerText || "";
     }
 
-    function getAdvert(from, to, sorting, sortDierction) {
+    function getAdvert(from, to, sorting, sortDierction, pagination) {
         document.querySelector('#loader').classList.remove('hide-loader');
         return $http({
             method: 'GET',
@@ -40,13 +53,23 @@ var classfieldController = function (adverts, $http, $state) {
         }).then((response) => {
             document.querySelector('#loader').classList.add('hide-loader');
             vm.adverts = response.data;
+            if(pagination) {
+                $state.go('.', {page: vm.page, direction: vm.sortDirection , sorting: sorting});
+            } else {
+                $state.go('.', {direction: vm.sortDirection , sorting: sorting}, {notify: false});
+            }
         })
     }
 
     function goForward() {
         vm.page += 1;
         vm.from = vm.page * vm.step;
-        vm.getAdvert(vm.from, vm.step, vm.sorting, vm.sortDirection);
+        if(vm.searchActive) {
+            console.log("asdasd");
+            search(vm.searchval, vm.searchType, vm.idCategory, vm.city, vm.from, vm.step);
+        } else {
+            vm.getAdvert(vm.from, vm.step, vm.sorting, vm.sortDirection, true);
+        }
     }
 
     function goBack() {
@@ -56,7 +79,11 @@ var classfieldController = function (adverts, $http, $state) {
             vm.page -= 1;
         }
         vm.from = vm.page * vm.step;
-        vm.getAdvert(vm.from, vm.step, vm.sorting, vm.sortDirection);
+        if(vm.searchActive) {
+            search(vm.searchval, vm.searchType, vm.idCategory, vm.city, vm.from, vm.step);
+        } else {
+            vm.getAdvert(vm.from, vm.step, vm.sorting, vm.sortDirection, true);
+        }
     }
 
     function order(type) {
@@ -72,14 +99,14 @@ var classfieldController = function (adverts, $http, $state) {
         }
     }
 
-    function search(value, type) {
+    function search(value, type, cetegory, city, limitFrom, limitTo) {
         document.querySelector('#loader').classList.remove('hide-loader');
         $http({
             method: 'GET',
-            url: `/dashboard.php?function=search&searchValue=${encodeURIComponent(value)}&type=${type}`
-        }).then((response) => {
+            url: `/dashboard.php?function=search&searchValue=${encodeURIComponent(value)}&type=${type}&category=${cetegory}&city=${city}&limitFrom=${limitFrom}&limitTo=${limitTo}`
+        }).then((result) => {
             document.querySelector('#loader').classList.add('hide-loader');
-            vm.adverts = response.data;
+            vm.adverts = result.data;
             vm.searchActive = true;
         })
     }
@@ -119,6 +146,10 @@ var classfieldController = function (adverts, $http, $state) {
                 vm.adverts[i].delete = false;
             }
         }
+    }
+
+    function changeStep(step) {
+        $state.go('.', {step: step}, {notify: false});
     }
 
 }
