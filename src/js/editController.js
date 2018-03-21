@@ -98,13 +98,11 @@ var editController = function (advert, tags, postcodes, $http, promoTypes, $stat
             method: 'GET',
             url: `/dashboard.php?function=submit&data=${JSON.stringify(vm.advert)}`
         }).then((response) => {
-            if(vm.promoTyp != "") {
+            if(vm.promoDo != "") {
                 vm.promoOd = new Date();
-                vm.promoDo = new Date();
-                vm.promoDo.setDate(vm.promoDo.getDate() + parseInt(vm.promoTyp));
                 $http({
                     method: 'GET',
-                    url: `/dashboard.php?function=makePromo&id=${vm.advert.idAdvert}&promoOd=${vm.formatDate(vm.promoOd)}&promoDo=${vm.formatDate(vm.promoDo)}&promoTyp=${vm.promoTyp}`
+                    url: `/dashboard.php?function=makePromo&id=${vm.advert.idAdvert}&promoOd=${vm.formatDate(vm.promoOd)}&promoDo=${vm.formatDate(vm.promoDo)}&promoTyp=${2}`
                 })
             }
             vm.saved = 1;

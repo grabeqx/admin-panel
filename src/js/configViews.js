@@ -177,11 +177,8 @@ dashboard.config(function($stateProvider, $urlRouterProvider) {
                     <label>Opis</label>
                     <textarea ng-model="edit.advert.Description"></textarea>
                     <div class="promo-div" ng-if="!edit.advert.promoDo">
-                        <label>Promowanie</label>
-                        <select ng-model="edit.promoTyp">
-                            <option value="">Wybierz</option>
-                            <option ng-repeat="typ in edit.promoTypes" value="{{typ.czas_trwania}}">{{typ.opis}}</option>
-                        </select>
+                        <label>Promowanie do</label>
+                        <input type="date" ng-model="edit.promoDo"/>
                     </div>
                     <label ng-if="edit.advert.UploadedFiles">Zdjęcia</label>
                     <div class="image-container" ng-if="edit.advert.UploadedFiles">
