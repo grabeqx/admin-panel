@@ -25,9 +25,9 @@ if ($_GET['function'] == 'getAdverts') {
 		$fraze = 'advert.'.$type;
 	};
 	if($category == "0") {
-		$sql2 = "SELECT advert.*, maincat.Category AS 'category', advert_promo.PromoTyp AS 'promo', advert_promo.PromoDo AS 'promoDo', log_userinfo.ip AS 'ip' FROM advert LEFT JOIN maincat ON advert.idCategory = maincat.idCategory LEFT JOIN log_userinfo ON advert.id_userinfo = log_userinfo.id LEFT JOIN advert_promo ON advert.idAdvert = advert_promo.PromoAdvertId AND advert_promo.PromoDo >= CURDATE() WHERE ". $fraze ." LIKE '%". $searchValue ."%' AND advert.Location LIKE '%". $city ."%' GROUP BY advert.idAdvert ORDER BY CASE WHEN advert_promo.PromoAdvertId IS NOT NULL THEN 0 ELSE 1 END, advert.". $sorting ." ". $sortDierction ." LIMIT ". $limitFrom .", ". $limitTo;
+		$sql2 = "SELECT advert.*, maincat.Category AS 'category', advert_promo.PromoTyp AS 'promo', advert_promo.PromoDo AS 'promoDo', log_userinfo.ip AS 'ip' FROM advert LEFT JOIN maincat ON advert.idCategory = maincat.idCategory LEFT JOIN log_userinfo ON advert.id_userinfo = log_userinfo.id LEFT JOIN advert_promo ON advert.idAdvert = advert_promo.PromoAdvertId AND advert_promo.PromoDo > CURDATE() WHERE ". $fraze ." LIKE '%". $searchValue ."%' AND advert.Location LIKE '%". $city ."%' GROUP BY advert.idAdvert ORDER BY CASE WHEN advert_promo.PromoAdvertId IS NOT NULL THEN 0 ELSE 1 END, advert.". $sorting ." ". $sortDierction ." LIMIT ". $limitFrom .", ". $limitTo;
 	} else {
-		$sql2 = "SELECT advert.*, maincat.Category AS 'category', advert_promo.PromoTyp AS 'promo', advert_promo.PromoDo AS 'promoDo', log_userinfo.ip AS 'ip' FROM advert LEFT JOIN maincat ON advert.idCategory = maincat.idCategory LEFT JOIN log_userinfo ON advert.id_userinfo = log_userinfo.id LEFT JOIN advert_promo ON advert.idAdvert = advert_promo.PromoAdvertId AND advert_promo.PromoDo >= CURDATE() WHERE ". $fraze ." LIKE '%". $searchValue ."%' AND advert.Location LIKE '%". $city ."%' AND maincat.idCategory LIKE '%". $category ."%' GROUP BY advert.idAdvert ORDER BY CASE WHEN advert_promo.PromoAdvertId IS NOT NULL THEN 0 ELSE 1 END, advert.". $sorting ." ". $sortDierction ." LIMIT ". $limitFrom .", ". $limitTo;
+		$sql2 = "SELECT advert.*, maincat.Category AS 'category', advert_promo.PromoTyp AS 'promo', advert_promo.PromoDo AS 'promoDo', log_userinfo.ip AS 'ip' FROM advert LEFT JOIN maincat ON advert.idCategory = maincat.idCategory LEFT JOIN log_userinfo ON advert.id_userinfo = log_userinfo.id LEFT JOIN advert_promo ON advert.idAdvert = advert_promo.PromoAdvertId AND advert_promo.PromoDo > CURDATE() WHERE ". $fraze ." LIKE '%". $searchValue ."%' AND advert.Location LIKE '%". $city ."%' AND maincat.idCategory LIKE '%". $category ."%' GROUP BY advert.idAdvert ORDER BY CASE WHEN advert_promo.PromoAdvertId IS NOT NULL THEN 0 ELSE 1 END, advert.". $sorting ." ". $sortDierction ." LIMIT ". $limitFrom .", ". $limitTo;
 	}
 	$result = $conn->query($sql2);
 	$outLista = [];
@@ -40,7 +40,7 @@ if ($_GET['function'] == 'getAdverts') {
 if ($_GET['function'] == 'getAdvert') {
 
 	$advertId = $_GET['advertId'];
-    $sql2 = "SELECT advert.*, maincat.Category AS 'category', advert_promo.PromoTyp AS 'promo', advert_promo.PromoDo AS 'promoDo' FROM advert LEFT JOIN maincat ON advert.idCategory = maincat.idCategory LEFT JOIN advert_promo ON advert.idAdvert = advert_promo.PromoAdvertId AND advert_promo.PromoDo >= CURDATE() WHERE advert.idAdvert = ". $advertId;
+    $sql2 = "SELECT advert.*, maincat.Category AS 'category', advert_promo.PromoTyp AS 'promo', advert_promo.PromoDo AS 'promoDo' FROM advert LEFT JOIN maincat ON advert.idCategory = maincat.idCategory LEFT JOIN advert_promo ON advert.idAdvert = advert_promo.PromoAdvertId AND advert_promo.PromoDo > CURDATE() WHERE advert.idAdvert = ". $advertId;
 	$result = $conn->query($sql2);
 	$outLista = [];
 	while($row = mysqli_fetch_assoc($result)) {
