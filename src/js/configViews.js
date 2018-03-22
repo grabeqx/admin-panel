@@ -2,24 +2,19 @@ dashboard.config(function($stateProvider, $urlRouterProvider) {
     $stateProvider
     .state({
         name: 'ogloszenia',
-        url: '/ogloszenia?page&direction&sorting',
+        url: '/ogloszenia?page&search&searchType&idCategory&city&direction&sorting&step',
         params: {
             page: {
                 value: '0',
                 squash: true
             },
-            direction: {
-                value: 'DESC',
-                squash: true
-            },
-            sorting: {
-                value: 'idAdvert',
-                squash: true
-            },
-            step: {
-                value: '50',
-                squash: true
-            }
+            direction: 'DESC',
+            sorting: 'idAdvert',
+            step: '50',
+            search: '',
+            searchType: 'Title',
+            idCategory: '0',
+            city: ''
         },
         template: `
             <div class="search-container">
@@ -45,7 +40,7 @@ dashboard.config(function($stateProvider, $urlRouterProvider) {
                     </select>
                     <label>Miasto</label>
                     <input type="text" placeholder="miasto" ng-model="classfield.city" />
-                    <input type="submit" value="Szukaj" ng-disabled="!(classfield.searchval.length >= 3)">
+                    <input type="submit" value="Szukaj">
                     <button ng-click="classfield.reset()">Reset</button>
                 </form>
             </div>
@@ -245,5 +240,5 @@ dashboard.config(function($stateProvider, $urlRouterProvider) {
     });
 
 
-    $urlRouterProvider.otherwise('/ogloszenia?page=0&direction=DESC&sorting=idAdvert');
+    $urlRouterProvider.otherwise('/ogloszenia?page=0&search=&searchType=Title&idCategory=0&city=&direction=DESC&sorting=idAdvert&step=50');
 });

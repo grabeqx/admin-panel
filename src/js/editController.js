@@ -94,19 +94,24 @@ var editController = function (advert, tags, postcodes, $http, promoTypes, $stat
 
     function submit() {
         var x = new Date(vm.promoDo);
+        vm.advert['Mobile'] = encodeURIComponent(vm.advert['Mobile']);
+        let desc = encodeURIComponent(vm.advert['Description']);
+        delete(vm.advert['Description']);
         $http({
             method: 'GET',
-            url: `/dashboard.php?function=submit&data=${JSON.stringify(vm.advert)}`
+            url: `/dashboard.php?function=submit&data=${JSON.stringify(vm.advert)}&desc=${desc}`
         }).then((response) => {
             if(vm.promoDo != "") {
                 vm.promoOd = new Date();
                 $http({
                     method: 'GET',
                     url: `/dashboard.php?function=makePromo&id=${vm.advert.idAdvert}&promoOd=${vm.formatDate(vm.promoOd)}&promoDo=${vm.formatDate(vm.promoDo)}&promoTyp=${2}`
+                }).then(() => {
+                    window.history.back();
                 })
+            }else {
+                window.history.back();
             }
-            vm.saved = 1;
-            window.history.back();
         })
     }
 
