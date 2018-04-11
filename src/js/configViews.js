@@ -75,6 +75,7 @@ dashboard.config(function($stateProvider, $urlRouterProvider) {
                             <th>Kategoria</th>
                             <th>Wygaśnięte</th>
                             <th>Promowanie do</th>
+                            <th>Wartość</th>
                             <th>E-mail</th>
                             <th>Hasło</th>
                             <th>IP adres</th>
@@ -92,6 +93,7 @@ dashboard.config(function($stateProvider, $urlRouterProvider) {
                             <td>{{advert.category}}</td>
                             <td>{{advert.expires == 1 ? 'Nie' : 'Tak'}}</td>
                             <td>{{advert.promoDo}}</td>
+                            <td>{{classfield.getPromoValue(advert.DateCreated, advert.promoDo)}}</td>
                             <td>{{advert.Email}}</td>
                             <td>{{advert.adPassword}}</td>
                             <td>{{advert.ip}}</td>

@@ -32,6 +32,7 @@ var classfieldController = function ($http, $state, $stateParams, categories) {
     this.selectAll = selectAll;
     this.strip = strip;
     this.changeStep = changeStep;
+    this.getPromoValue = getPromoValue;
     
 
     _Init();
@@ -133,6 +134,30 @@ var classfieldController = function ($http, $state, $stateParams, categories) {
 
     function changeStep(step) {
         $state.go('.', {step: step}, {notify: false});
+    }
+
+    function getPromoValue(dateCreated, PromoDate) {
+        if(PromoDate == null) {
+            return "Za darmo";
+        };
+        var oneDay = 24*60*60*1000; 
+        var firstDate = new Date(PromoDate);
+        var secondDate = new Date(dateCreated);
+
+        var diffDays = Math.round(Math.abs((firstDate.getTime() - secondDate.getTime())/(oneDay)));
+        if(diffDays <= 7) {
+            return "15.00£";
+        } else if(diffDays > 7 && diffDays <= 14) {
+            return "25.00£";
+        } else if(diffDays > 14 && diffDays <= 30) {
+            return "35.00£";
+        } else if(diffDays > 30 && diffDays <= 60) {
+            return "55.00£";
+        } else if(diffDays > 60 && diffDays <= 90) {
+            return "85.00£";
+        } else if(diffDays > 90) {
+            return "Brak wartości";
+        }
     }
 
 }
