@@ -419,3 +419,30 @@
   opacity: 1;
   max-height: 100px
 }
+.promowanie-cena input {
+    width: 250px;
+    padding: 0px 5px;
+    box-sizing: border-box;
+    box-shadow: none;
+    border: none;
+    background: #f1f1f1;
+}
+.promowanie-cena button {
+  margin-left: 10px;
+  background: #3c8dbe;
+  color: #fff;
+  border: 0px;
+  padding: 5px 30px;
+  transition: all 0.2s ease-in-out;
+}
+.promowanie-cena button:hover {
+  background: #2e6688;
+}
+.promowanie-cena p {
+  margin-top: 10px;
+  background: #fff59d;
+  width: 100%;
+  max-width: 200px;
+  padding: 9px;
+  font-size: 19px;
+}

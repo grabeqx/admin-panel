@@ -43,6 +43,13 @@ dashboard.config(function($stateProvider, $urlRouterProvider) {
                     <input type="submit" value="Szukaj">
                     <button ng-click="classfield.reset()">Reset</button>
                 </form>
+                <div class="promowanie-cena">
+                    <h3>Wyszukaj sumy wartości ogłoszeń premium</h3>
+                    <input type="date" ng-model="classfield.promoOd" placeholder="Promowanie od">
+                    <input type="date" ng-model="classfield.promoDo" placeholder="Promowanie Do">
+                    <button ng-click="classfield.getPromoSumValue()">Sprawdź</button>
+                    <p ng-if="classfield.promoValue">Wartość to: {{classfield.promoValue}} </p>
+                </div>
             </div>
             <div class="pagination">
                 <button ng-click="classfield.goBack()"><i class="fa fa-angle-left"></i>  Wstecz</button>

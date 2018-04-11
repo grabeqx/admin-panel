@@ -136,4 +136,17 @@ if ($_GET['function'] == 'removePromo') {
 	echo $result;
 }
 
+if ($_GET['function'] == 'getPromo') {
+
+	$promoOd = $_GET['promoOd'];
+	$promoDo = $_GET['promoDo'];
+    $sql2 = "SELECT * FROM advert_promo WHERE TIMESTAMP(PromoOd) > TIMESTAMP('$promoOd') AND TIMESTAMP(PromoOd) <= TIMESTAMP('$promoDo')";
+	$result = $conn->query($sql2);
+	$outLista = [];
+	while($row = mysqli_fetch_assoc($result)) {
+		array_push($outLista,$row);
+	}
+	print_r(json_encode($outLista));
+}
+
 ?>
