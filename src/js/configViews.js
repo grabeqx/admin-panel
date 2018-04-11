@@ -75,7 +75,7 @@ dashboard.config(function($stateProvider, $urlRouterProvider) {
                             <th>Kategoria</th>
                             <th>Wygaśnięte</th>
                             <th>Promowanie do</th>
-                            <th>Wartość</th>
+                            <th>Wartość<br>{{:: classfield.sumOfPromoValues}}</th>
                             <th>E-mail</th>
                             <th>Hasło</th>
                             <th>IP adres</th>

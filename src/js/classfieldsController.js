@@ -33,7 +33,7 @@ var classfieldController = function ($http, $state, $stateParams, categories) {
     this.strip = strip;
     this.changeStep = changeStep;
     this.getPromoValue = getPromoValue;
-    
+    this.sumAllPices = sumAllPices;
 
     _Init();
 
@@ -55,6 +55,7 @@ var classfieldController = function ($http, $state, $stateParams, categories) {
         }).then((response) => {
             document.querySelector('#loader').classList.add('hide-loader');
             vm.adverts = response.data;
+            vm.sumAllPices(response.data);
             $state.go('.', {page: vm.page, search: value , searchType: type, idCategory: cetegory, city: city, direction: vm.sortDirection , sorting: sorting});
         })
     }
@@ -143,7 +144,6 @@ var classfieldController = function ($http, $state, $stateParams, categories) {
         var oneDay = 24*60*60*1000; 
         var firstDate = new Date(PromoDate);
         var secondDate = new Date(dateCreated);
-
         var diffDays = Math.round(Math.abs((firstDate.getTime() - secondDate.getTime())/(oneDay)));
         if(diffDays <= 7) {
             return "15.00£";
@@ -158,6 +158,33 @@ var classfieldController = function ($http, $state, $stateParams, categories) {
         } else if(diffDays > 90) {
             return "Brak wartości";
         }
+    }
+
+    function sumAllPices(adverts) {
+        var oneDay = 24*60*60*1000;
+        var price = 0;
+        adverts.map(advert => {
+            if(advert.promoDo !== null) {
+                var firstDate = new Date(advert.promoDo);
+                var secondDate = new Date(advert.DateCreated);
+                var diffDays = Math.round(Math.abs((firstDate.getTime() - secondDate.getTime())/(oneDay)));
+                window.sumOfPromoValues = vm.sumOfPromoValues;
+                if(diffDays <= 7) {
+                    price += 15;
+                } else if(diffDays > 7 && diffDays <= 14) {
+                    price += 25;
+                } else if(diffDays > 14 && diffDays <= 30) {
+                    price += 35;
+                } else if(diffDays > 30 && diffDays <= 60) {
+                    price += 55;
+                } else if(diffDays > 60 && diffDays <= 90) {
+                    price += 85;
+                } else if(diffDays > 90) {
+                    price += 0;
+                }
+            };      
+        });
+        vm.sumOfPromoValues = price + '.00£';
     }
 
 }
