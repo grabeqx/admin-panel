@@ -23,6 +23,8 @@ var classfieldController = function classfieldController($http, $state, $statePa
     this.city = $stateParams.city;
     this.categories = categories;
     this.searchval = $stateParams.search;
+    this.promoOd = '';
+    this.promoDo = '';
     // Methods
     this.getAdvert = getAdvert;
     this.goForward = goForward;
@@ -34,6 +36,9 @@ var classfieldController = function classfieldController($http, $state, $statePa
     this.selectAll = selectAll;
     this.strip = strip;
     this.changeStep = changeStep;
+    this.getPromoValue = getPromoValue;
+    this.sumAllPices = sumAllPices;
+    this.getPromoSumValue = getPromoSumValue;
 
     _Init();
 
@@ -55,6 +60,7 @@ var classfieldController = function classfieldController($http, $state, $statePa
         }).then(function (response) {
             document.querySelector('#loader').classList.add('hide-loader');
             vm.adverts = response.data;
+            vm.sumAllPices(response.data);
             $state.go('.', { page: vm.page, search: value, searchType: type, idCategory: cetegory, city: city, direction: vm.sortDirection, sorting: sorting });
         });
     }
@@ -133,6 +139,107 @@ var classfieldController = function classfieldController($http, $state, $statePa
 
     function changeStep(step) {
         $state.go('.', { step: step }, { notify: false });
+    }
+
+    function getPromoValue(dateCreated, PromoDate) {
+        if (PromoDate == null) {
+            return "Za darmo";
+        };
+        var oneDay = 24 * 60 * 60 * 1000;
+        var firstDate = new Date(PromoDate);
+        var secondDate = new Date(dateCreated);
+        var diffDays = Math.round(Math.abs((firstDate.getTime() - secondDate.getTime()) / oneDay));
+        if (diffDays <= 7) {
+            return "15.00£";
+        } else if (diffDays > 7 && diffDays <= 14) {
+            return "25.00£";
+        } else if (diffDays > 14 && diffDays <= 30) {
+            return "35.00£";
+        } else if (diffDays > 30 && diffDays <= 60) {
+            return "55.00£";
+        } else if (diffDays > 60 && diffDays <= 90) {
+            return "85.00£";
+        } else if (diffDays > 90) {
+            return "Brak wartości";
+        }
+    }
+
+    function sumAllPices(adverts) {
+        var oneDay = 24 * 60 * 60 * 1000;
+        var price = 0;
+        adverts.map(function (advert) {
+            if (advert.promoDo !== null) {
+                var firstDate = new Date(advert.promoDo);
+                var secondDate = new Date(advert.DateCreated);
+                var diffDays = Math.round(Math.abs((firstDate.getTime() - secondDate.getTime()) / oneDay));
+                window.sumOfPromoValues = vm.sumOfPromoValues;
+                if (diffDays <= 7) {
+                    price += 15;
+                } else if (diffDays > 7 && diffDays <= 14) {
+                    price += 25;
+                } else if (diffDays > 14 && diffDays <= 30) {
+                    price += 35;
+                } else if (diffDays > 30 && diffDays <= 60) {
+                    price += 55;
+                } else if (diffDays > 60 && diffDays <= 90) {
+                    price += 85;
+                } else if (diffDays > 90) {
+                    price += 0;
+                }
+            };
+        });
+        vm.sumOfPromoValues = price + '.00£';
+    }
+
+    function formatDate(date) {
+        var today = new Date(date),
+            dd = today.getDate(),
+            mm = today.getMonth() + 1,
+            yyyy = today.getFullYear(),
+            hh = today.getHours(),
+            min = today.getMinutes(),
+            sec = today.getSeconds();
+
+        if (dd < 10) {
+            dd = '0' + dd;
+        }
+        if (mm < 10) {
+            mm = '0' + mm;
+        }
+
+        return yyyy + '-' + mm + '-' + dd;
+    }
+
+    function getPromoSumValue() {
+        if (!vm.promoOd || !vm.promoDo) {
+            return;
+        }
+        $http({
+            method: 'GET',
+            url: '/dashboard.php?function=getPromo&promoOd=' + formatDate(vm.promoOd) + '&promoDo=' + formatDate(vm.promoDo)
+        }).then(function (response) {
+            var price = 0;
+            var oneDay = 24 * 60 * 60 * 1000;
+            response.data.map(function (advert) {
+                var firstDate = new Date(advert.PromoDo);
+                var secondDate = new Date(advert.PromoOd);
+                var diffDays = Math.round(Math.abs((firstDate.getTime() - secondDate.getTime()) / oneDay));
+                if (diffDays <= 7) {
+                    price += 15;
+                } else if (diffDays > 7 && diffDays <= 14) {
+                    price += 25;
+                } else if (diffDays > 14 && diffDays <= 30) {
+                    price += 35;
+                } else if (diffDays > 30 && diffDays <= 60) {
+                    price += 55;
+                } else if (diffDays > 60 && diffDays <= 90) {
+                    price += 85;
+                } else if (diffDays > 90) {
+                    price += 0;
+                }
+            });
+            vm.promoValue = price + '.00£';
+        });
     }
 };
 var editController = function editController(advert, tags, postcodes, $http, promoTypes, $state) {
@@ -271,7 +378,7 @@ dashboard.config(function ($stateProvider, $urlRouterProvider) {
             idCategory: '0',
             city: ''
         },
-        template: '\n            <div class="search-container">\n                <form id="search" ng-submit="classfield.search(classfield.searchval, classfield.searchType, classfield.idCategory, classfield.city, 0, 50)">\n                    <h3>Szukaj</h3>\n                    <select ng-model="classfield.searchType">\n                        <option selected value="Title">Tytu\u0142</option>\n                        <option selected value="idAdvert">ID</option>\n                        <option value="Mobile">Numer telefonu</option>\n                        <option value="Description">Tre\u015B\u0107</option>\n                        <option value="idAdvert">Numer og\u0142oszenia</option>\n                        <option value="ip">IP</option>\n                        <option value="Email">E-mail</option>\n                    </select>\n                    <input type="text" \n                        ng-model="classfield.searchval"\n                        placeholder="Szukana fraza"\n                    >\n                    <label>Kategoria</label>\n                    <select ng-model="classfield.idCategory" ng-selected="classfield.idCategory">\n                        <option value="0">Wszystkie</option>\n                        <option value="{{cat.idCategory}}" ng-repeat="cat in classfield.categories">{{cat.ShortName}}</option>\n                    </select>\n                    <label>Miasto</label>\n                    <input type="text" placeholder="miasto" ng-model="classfield.city" />\n                    <input type="submit" value="Szukaj">\n                    <button ng-click="classfield.reset()">Reset</button>\n                </form>\n            </div>\n            <div class="pagination">\n                <button ng-click="classfield.goBack()"><i class="fa fa-angle-left"></i>  Wstecz</button>\n                <button ng-click="classfield.goForward()">Dalej  <i class="fa fa-angle-right"></i></button>\n                <select ng-model="classfield.selectStep" ng-change="classfield.changeStep(classfield.selectStep)">\n                    <option value="20">20</option>\n                    <option value="50">50</option>\n                    <option value="100">100</option>\n                </select>\n            </div>\n            <div class="advert">\n                <table>\n                    <thead>\n                        <tr>\n                            <th ng-click="classfield.order(\'idAdvert\')" class="clickable">Index <i class="order fa" ng-class="{\n                                \'fa-angle-down\': classfield.ordering.idAdvert.down,\n                                \'fa-angle-up\': classfield.ordering.idAdvert.up, \n                                \'hidden\': classfield.ordering.idAdvert.hidden}"\n                                ng-if="!classfield.searchActive"></i></th>\n                            <th ng-click="classfield.order(\'Title\')" class="clickable">Tytu\u0142 <i class="order fa" ng-class="{\n                                \'fa-angle-down\': classfield.ordering.Title.down,\n                                \'fa-angle-up\': classfield.ordering.Title.up, \n                                \'hidden\': classfield.ordering.Title.hidden}"\n                                ng-if="!classfield.searchActive"></i></th>\n                            <th ng-click="classfield.order(\'DateCreated\')" class="clickable">Data utworzenia <i class="order fa" ng-class="{\n                                \'fa-angle-down\': classfield.ordering.DateCreated.down,\n                                \'fa-angle-up\': classfield.ordering.DateCreated.up, \n                                \'hidden\': classfield.ordering.DateCreated.hidden}"\n                                ng-if="!classfield.searchActive"></i></th>\n                            <th>Kategoria</th>\n                            <th>Wyga\u015Bni\u0119te</th>\n                            <th>Promowanie do</th>\n                            <th>E-mail</th>\n                            <th>Has\u0142o</th>\n                            <th>IP adres</th>\n                            <th><input type="checkbox" ng-model="classfield.removeAll" ng-click="classfield.selectAll(classfield.removeAll)" /> Usu\u0144</th>\n                        </tr>\n                    </thead>\n                    <tbody>\n                        <tr ng-repeat="advert in classfield.adverts" ng-class="{promo: advert.promo}">\n                            <td>{{advert.idAdvert}}</td>\n                            <td class="ad-title" ui-sref="edit({id: advert.idAdvert})">\n                                <img ng-if="advert.MainFile" ng-src="/img/list/{{advert.MainFile}}"/>\n                                {{advert.Title}}\n                            </td>\n                            <td>{{advert.DateCreated}}</td>\n                            <td>{{advert.category}}</td>\n                            <td>{{advert.expires == 1 ? \'Nie\' : \'Tak\'}}</td>\n                            <td>{{advert.promoDo}}</td>\n                            <td>{{advert.Email}}</td>\n                            <td>{{advert.adPassword}}</td>\n                            <td>{{advert.ip}}</td>\n                            <td><input type="checkbox" ng-model="advert.delete" /></td>\n                        </tr>\n                    </tbody>\n                </table>\n            </div>\n            <div class="pagination">\n                <button ng-click="classfield.remove()" class="danger"><i class="fa fa-trash-alt"></i>  Usu\u0144</button>           \n                <button ng-click="classfield.goBack()"><i class="fa fa-angle-left"></i>  Wstecz</button>\n                <button ng-click="classfield.goForward()">Dalej  <i class="fa fa-angle-right"></i></button>\n            </div>\n        ',
+        template: '\n            <div class="search-container">\n                <form id="search" ng-submit="classfield.search(classfield.searchval, classfield.searchType, classfield.idCategory, classfield.city, 0, 50)">\n                    <h3>Szukaj</h3>\n                    <select ng-model="classfield.searchType">\n                        <option selected value="Title">Tytu\u0142</option>\n                        <option selected value="idAdvert">ID</option>\n                        <option value="Mobile">Numer telefonu</option>\n                        <option value="Description">Tre\u015B\u0107</option>\n                        <option value="idAdvert">Numer og\u0142oszenia</option>\n                        <option value="ip">IP</option>\n                        <option value="Email">E-mail</option>\n                    </select>\n                    <input type="text" \n                        ng-model="classfield.searchval"\n                        placeholder="Szukana fraza"\n                    >\n                    <label>Kategoria</label>\n                    <select ng-model="classfield.idCategory" ng-selected="classfield.idCategory">\n                        <option value="0">Wszystkie</option>\n                        <option value="{{cat.idCategory}}" ng-repeat="cat in classfield.categories">{{cat.ShortName}}</option>\n                    </select>\n                    <label>Miasto</label>\n                    <input type="text" placeholder="miasto" ng-model="classfield.city" />\n                    <input type="submit" value="Szukaj">\n                    <button ng-click="classfield.reset()">Reset</button>\n                </form>\n                <div class="promowanie-cena">\n                    <h3>Wyszukaj sumy warto\u015Bci og\u0142osze\u0144 premium</h3>\n                    <input type="date" ng-model="classfield.promoOd" placeholder="Promowanie od">\n                    <input type="date" ng-model="classfield.promoDo" placeholder="Promowanie Do">\n                    <button ng-click="classfield.getPromoSumValue()">Sprawd\u017A</button>\n                    <p ng-if="classfield.promoValue">Warto\u015B\u0107 to: {{classfield.promoValue}} </p>\n                </div>\n            </div>\n            <div class="pagination">\n                <button ng-click="classfield.goBack()"><i class="fa fa-angle-left"></i>  Wstecz</button>\n                <button ng-click="classfield.goForward()">Dalej  <i class="fa fa-angle-right"></i></button>\n                <select ng-model="classfield.selectStep" ng-change="classfield.changeStep(classfield.selectStep)">\n                    <option value="20">20</option>\n                    <option value="50">50</option>\n                    <option value="100">100</option>\n                </select>\n            </div>\n            <div class="advert">\n                <table>\n                    <thead>\n                        <tr>\n                            <th ng-click="classfield.order(\'idAdvert\')" class="clickable">Index <i class="order fa" ng-class="{\n                                \'fa-angle-down\': classfield.ordering.idAdvert.down,\n                                \'fa-angle-up\': classfield.ordering.idAdvert.up, \n                                \'hidden\': classfield.ordering.idAdvert.hidden}"\n                                ng-if="!classfield.searchActive"></i></th>\n                            <th ng-click="classfield.order(\'Title\')" class="clickable">Tytu\u0142 <i class="order fa" ng-class="{\n                                \'fa-angle-down\': classfield.ordering.Title.down,\n                                \'fa-angle-up\': classfield.ordering.Title.up, \n                                \'hidden\': classfield.ordering.Title.hidden}"\n                                ng-if="!classfield.searchActive"></i></th>\n                            <th ng-click="classfield.order(\'DateCreated\')" class="clickable">Data utworzenia <i class="order fa" ng-class="{\n                                \'fa-angle-down\': classfield.ordering.DateCreated.down,\n                                \'fa-angle-up\': classfield.ordering.DateCreated.up, \n                                \'hidden\': classfield.ordering.DateCreated.hidden}"\n                                ng-if="!classfield.searchActive"></i></th>\n                            <th>Kategoria</th>\n                            <th>Wyga\u015Bni\u0119te</th>\n                            <th>Promowanie do</th>\n                            <th>Warto\u015B\u0107<br>{{:: classfield.sumOfPromoValues}}</th>\n                            <th>E-mail</th>\n                            <th>Has\u0142o</th>\n                            <th>IP adres</th>\n                            <th><input type="checkbox" ng-model="classfield.removeAll" ng-click="classfield.selectAll(classfield.removeAll)" /> Usu\u0144</th>\n                        </tr>\n                    </thead>\n                    <tbody>\n                        <tr ng-repeat="advert in classfield.adverts" ng-class="{promo: advert.promo}">\n                            <td>{{advert.idAdvert}}</td>\n                            <td class="ad-title" ui-sref="edit({id: advert.idAdvert})">\n                                <img ng-if="advert.MainFile" ng-src="/img/list/{{advert.MainFile}}"/>\n                                {{advert.Title}}\n                            </td>\n                            <td>{{advert.DateCreated}}</td>\n                            <td>{{advert.category}}</td>\n                            <td>{{advert.expires == 1 ? \'Nie\' : \'Tak\'}}</td>\n                            <td>{{advert.promoDo}}</td>\n                            <td>{{classfield.getPromoValue(advert.DateCreated, advert.promoDo)}}</td>\n                            <td>{{advert.Email}}</td>\n                            <td>{{advert.adPassword}}</td>\n                            <td>{{advert.ip}}</td>\n                            <td><input type="checkbox" ng-model="advert.delete" /></td>\n                        </tr>\n                    </tbody>\n                </table>\n            </div>\n            <div class="pagination">\n                <button ng-click="classfield.remove()" class="danger"><i class="fa fa-trash-alt"></i>  Usu\u0144</button>           \n                <button ng-click="classfield.goBack()"><i class="fa fa-angle-left"></i>  Wstecz</button>\n                <button ng-click="classfield.goForward()">Dalej  <i class="fa fa-angle-right"></i></button>\n            </div>\n        ',
         controller: classfieldController,
         controllerAs: 'classfield',
         resolve: {

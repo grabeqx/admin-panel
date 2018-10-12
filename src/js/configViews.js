@@ -190,6 +190,10 @@ dashboard.config(function($stateProvider, $urlRouterProvider) {
                             <button ng-click="edit.removeImg($index)"><i class="fa fa-times-circle"></i></button>
                             <img ng-src="/img/ad/{{image}}">
                         </div>
+                        <div class="file-upload">
+                            <input type="file" file-model="edit.newImage" />
+                            <input type="button" value="Dodaj zdjęcie" ng-click="edit.addNewImage()" />
+                        </div>
                     </div>
                     <input type="submit" value="Zapisz">
                     <p class="save-info" ng-class="{'seved': edit.saved}">Zapisano</p>

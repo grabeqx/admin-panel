@@ -1,4 +1,4 @@
-var editController = function (advert, tags, postcodes, $http, promoTypes, $state) {
+var editController = function (advert, tags, postcodes, $http, promoTypes, $state, fileUpload) {
     // Data
     var vm = this;
     this.advert = advert;
@@ -32,6 +32,7 @@ var editController = function (advert, tags, postcodes, $http, promoTypes, $stat
     this.removeImg = removeImg;
     this.formatDate = formatDate;
     this.removePromo = removePromo;
+    this.addNewImage = addNewImage;
 
     function formatDate(date) {
         var today = new Date(date),
@@ -123,4 +124,20 @@ var editController = function (advert, tags, postcodes, $http, promoTypes, $stat
             vm.removeMessage = "Promowanie wyłączone";
         })
     }
+
+    function addNewImage() {
+        var file = vm.newImage;
+        var uploadUrl = "/uploadimg.php";
+        fileUpload.uploadFileToUrl(file, uploadUrl).then(function(response){
+            var uploadUrl = "/uploadimgBig.php";
+            fileUpload.uploadFileToUrl(file, uploadUrl).then(function(response){
+                vm.images.push(response.data);
+                vm.advert.UploadedFiles = vm.images.join('*');
+            });
+
+        });
+        
+    }
+
+
 }
