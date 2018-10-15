@@ -185,7 +185,7 @@ dashboard.config(function($stateProvider, $urlRouterProvider) {
                         <input type="date" ng-model="edit.promoDo"/>
                     </div>
                     <label ng-if="edit.advert.UploadedFiles">Zdjęcia</label>
-                    <div class="image-container" ng-if="edit.advert.UploadedFiles">
+                    <div class="image-container">
                         <div ng-repeat="image in edit.images track by $index" ng-if="image.length">
                             <button ng-click="edit.removeImg($index)"><i class="fa fa-times-circle"></i></button>
                             <img ng-src="/img/ad/{{image}}">

@@ -242,7 +242,7 @@ var classfieldController = function classfieldController($http, $state, $statePa
         });
     }
 };
-var editController = function editController(advert, tags, postcodes, $http, promoTypes, $state) {
+var editController = function editController(advert, tags, postcodes, $http, promoTypes, $state, fileUpload) {
     // Data
     var vm = this;
     this.advert = advert;
@@ -267,6 +267,7 @@ var editController = function editController(advert, tags, postcodes, $http, pro
     this.removeImg = removeImg;
     this.formatDate = formatDate;
     this.removePromo = removePromo;
+    this.addNewImage = addNewImage;
 
     function formatDate(date) {
         var today = new Date(date),
@@ -358,8 +359,43 @@ var editController = function editController(advert, tags, postcodes, $http, pro
             vm.removeMessage = "Promowanie wyłączone";
         });
     }
+
+    function addNewImage() {
+        var file = vm.newImage;
+        var uploadUrl = "/uploadimg.php";
+        fileUpload.uploadFileToUrl(file, uploadUrl).then(function (response) {
+            var uploadUrl = "/uploadimgBig.php";
+            fileUpload.uploadFileToUrl(file, uploadUrl).then(function (response) {
+                vm.images.push(response.data);
+                vm.advert.UploadedFiles = vm.images.join('*');
+            });
+        });
+    }
 };
-var dashboard = angular.module('dashboard', ['ui.router']).controller('mainController', ['$scope', function ($scope) {}]);
+var dashboard = angular.module('dashboard', ['ui.router']).controller('mainController', ['$scope', function ($scope) {}]).directive('fileModel', ['$parse', function ($parse) {
+    return {
+        restrict: 'A',
+        link: function link(scope, element, attrs) {
+            var model = $parse(attrs.fileModel);
+            var modelSetter = model.assign;
+
+            element.bind('change', function () {
+                scope.$apply(function () {
+                    modelSetter(scope, element[0].files[0]);
+                });
+            });
+        }
+    };
+}]).service('fileUpload', ['$http', function ($http) {
+    this.uploadFileToUrl = function (file, uploadUrl) {
+        var fd = new FormData();
+        fd.append('file', file);
+        return $http.post(uploadUrl, fd, {
+            transformRequest: angular.identity,
+            headers: { 'Content-Type': undefined }
+        });
+    };
+}]);
 
 dashboard.config(function ($stateProvider, $urlRouterProvider) {
     $stateProvider.state({
@@ -394,7 +430,7 @@ dashboard.config(function ($stateProvider, $urlRouterProvider) {
     }).state({
         name: 'edit',
         url: '/edit/:id',
-        template: '\n            <div id="advert-content" ng-class="{\'promo\':edit.advert.promoDo}">\n                <form id="advert-form" ng-submit="edit.submit()">\n                    <label>Tytu\u0142</label>\n                    <input type="text" ng-model="edit.advert.Title">\n                    <label>Data utworzenia</label>\n                    <input type="text" ng-model="edit.advert.DateCreated">\n                    <label>Cena</label>\n                    <input type="text" ng-model="edit.advert.Price">\n                    <label>Warto\u015B\u0107 Tagi</label>\n                    <input type="text" ng-model="edit.advert.ValueTags">\n                    <label>Imi\u0119</label>\n                    <input type="text" ng-model="edit.advert.Name">\n                    <label>Email</label>\n                    <input type="text" ng-model="edit.advert.Email">\n                    <label>Telefon stacjonarny</label>\n                    <input type="text" ng-model="edit.advert.Landline">\n                    <label>Telefon</label>\n                    <input type="text" ng-model="edit.advert.Mobile">\n                    <label>Kategoria</label>\n                    <select ng-model="edit.advert.idCategory" ng-selected="edit.advert.idCategory" ng-change="edit.changeCategory(edit.advert.idCategory)">\n                        <option value="{{cat.id}}" ng-repeat="cat in edit.categories">{{cat.name}}</option>\n                    </select>\n                    <label>Tagi</label>\n                    <div class="tags-container">\n                        <label ng-repeat="tag in edit.tags">\n                            <input type="checkbox" value="{{tag.idSubcategory}}" ng-click="edit.toggleTags(tag.idSubcategory)" ng-checked="edit.checkTag(tag.idSubcategory)">\n                            {{tag.Subcategory}}\n                        </label>\n                    </div>\n                    <label>CountrySlug</label>\n                    <input type="text" ng-model="edit.advert.CountrySlug">\n                    <label>Lokalizacja</label>\n                    <input type="text" ng-model="edit.advert.LocationIndex">\n                    <label>Kod pocztowy</label>\n                    <input type="text" ng-model="edit.advert.Postcode">\n                    <label>Firma</label>\n                    <input type="text" ng-model="edit.advert.company">\n                    <div ng-if="edit.advert.promoDo">\n                        <label>Promowanie do</label>\n                        <input type="text" ng-model="edit.advert.promoDo">\n                        <label>Wy\u0142\u0105cz promowanie</label>\n                        <button ng-click="edit.removePromo()" class="danger">Wy\u0142\u0105cz</button>\n                        <p class="message" ng-class="{\'show\': edit.removeMessage}">{{edit.removeMessage}}</p>\n                    </div>\n                    <label>Wygasni\u0119te</label>\n                    <input type="text" ng-model="edit.advert.expires">\n                    <label>Opis</label>\n                    <textarea ng-model="edit.advert.Description"></textarea>\n                    <div class="promo-div" ng-if="!edit.advert.promoDo">\n                        <label>Promowanie do</label>\n                        <input type="date" ng-model="edit.promoDo"/>\n                    </div>\n                    <label ng-if="edit.advert.UploadedFiles">Zdj\u0119cia</label>\n                    <div class="image-container" ng-if="edit.advert.UploadedFiles">\n                        <div ng-repeat="image in edit.images track by $index" ng-if="image.length">\n                            <button ng-click="edit.removeImg($index)"><i class="fa fa-times-circle"></i></button>\n                            <img ng-src="/img/ad/{{image}}">\n                        </div>\n                    </div>\n                    <input type="submit" value="Zapisz">\n                    <p class="save-info" ng-class="{\'seved\': edit.saved}">Zapisano</p>\n                </form>\n            </div>\n        ',
+        template: '\n            <div id="advert-content" ng-class="{\'promo\':edit.advert.promoDo}">\n                <form id="advert-form" ng-submit="edit.submit()">\n                    <label>Tytu\u0142</label>\n                    <input type="text" ng-model="edit.advert.Title">\n                    <label>Data utworzenia</label>\n                    <input type="text" ng-model="edit.advert.DateCreated">\n                    <label>Cena</label>\n                    <input type="text" ng-model="edit.advert.Price">\n                    <label>Warto\u015B\u0107 Tagi</label>\n                    <input type="text" ng-model="edit.advert.ValueTags">\n                    <label>Imi\u0119</label>\n                    <input type="text" ng-model="edit.advert.Name">\n                    <label>Email</label>\n                    <input type="text" ng-model="edit.advert.Email">\n                    <label>Telefon stacjonarny</label>\n                    <input type="text" ng-model="edit.advert.Landline">\n                    <label>Telefon</label>\n                    <input type="text" ng-model="edit.advert.Mobile">\n                    <label>Kategoria</label>\n                    <select ng-model="edit.advert.idCategory" ng-selected="edit.advert.idCategory" ng-change="edit.changeCategory(edit.advert.idCategory)">\n                        <option value="{{cat.id}}" ng-repeat="cat in edit.categories">{{cat.name}}</option>\n                    </select>\n                    <label>Tagi</label>\n                    <div class="tags-container">\n                        <label ng-repeat="tag in edit.tags">\n                            <input type="checkbox" value="{{tag.idSubcategory}}" ng-click="edit.toggleTags(tag.idSubcategory)" ng-checked="edit.checkTag(tag.idSubcategory)">\n                            {{tag.Subcategory}}\n                        </label>\n                    </div>\n                    <label>CountrySlug</label>\n                    <input type="text" ng-model="edit.advert.CountrySlug">\n                    <label>Lokalizacja</label>\n                    <input type="text" ng-model="edit.advert.LocationIndex">\n                    <label>Kod pocztowy</label>\n                    <input type="text" ng-model="edit.advert.Postcode">\n                    <label>Firma</label>\n                    <input type="text" ng-model="edit.advert.company">\n                    <div ng-if="edit.advert.promoDo">\n                        <label>Promowanie do</label>\n                        <input type="text" ng-model="edit.advert.promoDo">\n                        <label>Wy\u0142\u0105cz promowanie</label>\n                        <button ng-click="edit.removePromo()" class="danger">Wy\u0142\u0105cz</button>\n                        <p class="message" ng-class="{\'show\': edit.removeMessage}">{{edit.removeMessage}}</p>\n                    </div>\n                    <label>Wygasni\u0119te</label>\n                    <input type="text" ng-model="edit.advert.expires">\n                    <label>Opis</label>\n                    <textarea ng-model="edit.advert.Description"></textarea>\n                    <div class="promo-div" ng-if="!edit.advert.promoDo">\n                        <label>Promowanie do</label>\n                        <input type="date" ng-model="edit.promoDo"/>\n                    </div>\n                    <label ng-if="edit.advert.UploadedFiles">Zdj\u0119cia</label>\n                    <div class="image-container" ng-if="edit.advert.UploadedFiles">\n                        <div ng-repeat="image in edit.images track by $index" ng-if="image.length">\n                            <button ng-click="edit.removeImg($index)"><i class="fa fa-times-circle"></i></button>\n                            <img ng-src="/img/ad/{{image}}">\n                        </div>\n                        <div class="file-upload">\n                            <input type="file" file-model="edit.newImage" />\n                            <input type="button" value="Dodaj zdj\u0119cie" ng-click="edit.addNewImage()" />\n                        </div>\n                    </div>\n                    <input type="submit" value="Zapisz">\n                    <p class="save-info" ng-class="{\'seved\': edit.saved}">Zapisano</p>\n                </form>\n            </div>\n        ',
         controller: editController,
         controllerAs: 'edit',
         resolve: {
